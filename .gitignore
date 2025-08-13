@@ -14,3 +14,5 @@ squadpicks_backend/.env
 
 # Node (for frontend)
 squadpicks_frontend/node_modules/
+
+squadpicks_backend/requirements.txt
