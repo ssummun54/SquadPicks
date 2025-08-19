@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 
 const schema = z.object({
-  email: z.string().email("Valid email required"),
+  username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
 });
 type FormData = z.infer<typeof schema>;
@@ -24,10 +23,10 @@ export default function LoginPage() {
 
   const onSubmit = async (data: FormData) => {
     try {
-      await login(data); // { email, password }
+      await login(data); // { username, password }
       navigate("/");
     } catch {
-      setError("password", { message: "Invalid email or password" });
+      setError("password", { message: "Invalid username or password" });
     }
   };
 
@@ -38,9 +37,9 @@ export default function LoginPage() {
     >
       <h2>Login</h2>
 
-      <label htmlFor="email">Email</label>
-      <input id="email" type="email" placeholder="you@example.com" {...register("email")} />
-      {errors.email && <small style={{ color: "red" }}>{errors.email.message}</small>}
+      <label htmlFor="username">Username</label>
+      <input id="username" type="text" placeholder="Username" {...register("username")} />
+      {errors.username && <small style={{ color: "red" }}>{errors.username.message}</small>}
 
       <label htmlFor="password">Password</label>
       <input id="password" type="password" placeholder="••••••••" {...register("password")} />

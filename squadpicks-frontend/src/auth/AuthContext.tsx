@@ -8,8 +8,8 @@ type User = { id: number; email: string; username?: string } | null;
 type AuthContextType = {
   user: User;
   isLoading: boolean;
-  login: (creds: { email: string; password: string }) => Promise<void>;
-  register: (data: { email: string; password: string }) => Promise<void>;
+  login: (creds: { username: string; password: string }) => Promise<void>;
+  register: (data: { username: string; email: string; password: string; first_name: string; last_name: string; birthdate: string }) => Promise<void>;
   logout: () => void;
 };
 
@@ -108,16 +108,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = async ({ email, password }: { email: string; password: string }) => {
-    const { data } = await api.post("/users/token/", { email, password });
+  const login = async ({ username, password }: { username: string; password: string }) => {
+    const { data } = await api.post("/users/token/", { username, password });
     saveTokens(data.access, data.refresh);
     const dec = jwtDecode<JwtPayload>(data.access);
-    setUser({ id: dec.user_id, email: dec.email ?? email });
+    setUser({ id: dec.user_id, email: dec.email ?? username });
   };
 
-  const register = async (payload: { email: string; password: string }) => {
+  const register = async (payload: { username: string; email: string; password: string; first_name: string; last_name: string; birthdate: string }) => {
     await api.post("/users/register/", payload);
-    await login({ email: payload.email, password: payload.password });
+    await login({ username: payload.username, password: payload.password });
   };
 
   const logout = () => {
