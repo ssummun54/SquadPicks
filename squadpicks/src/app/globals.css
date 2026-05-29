@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+:root {
+  /* Brand — SQUAD red */
+  --sp-brand:       #e8003d;
+  --sp-brand-dark:  #b5002f;
+  /* Accent — PICKS blue */
+  --sp-accent:      #3d7fff;
+  --sp-accent-dark: #2261e0;
+  /* Gradient midpoint (logo stadium purple) */
+  --sp-purple:      #7b2dff;
+  /* Full wordmark gradient: red → purple → blue */
+  --sp-gradient:    linear-gradient(90deg, #e8003d 0%, #7b2dff 50%, #3d7fff 100%);
+
+  /* Surface — deep navy to match logo background */
+  --sp-bg:          #080914;
+  --sp-surface:     #0f1228;
+  --sp-border:      #1e2248;
+
+  /* Text */
+  --sp-text:        #f1f5f9;
+  --sp-muted:       #8896b4;
+}
+
+@theme inline {
+  --color-brand:       var(--sp-brand);
+  --color-brand-dark:  var(--sp-brand-dark);
+  --color-accent:      var(--sp-accent);
+  --color-accent-dark: var(--sp-accent-dark);
+  --color-sp-purple:   var(--sp-purple);
+  --color-sp-bg:       var(--sp-bg);
+  --color-sp-surface:  var(--sp-surface);
+  --color-sp-border:   var(--sp-border);
+  --color-sp-text:     var(--sp-text);
+  --color-sp-muted:    var(--sp-muted);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html, body {
+  background-color: var(--sp-bg);
+  color: var(--sp-text);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  min-height: 100%;
+}
+
+/* Matches the SQUADPICKS wordmark gradient */
+.logo-gradient {
+  background: var(--sp-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Utility: pill badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
