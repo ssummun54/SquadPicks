@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod/v4'
 import { useRouter } from 'next/navigation'
 import { getSupabaseClient } from '@/lib/supabase/client'
+import { createGroupAction } from './_actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -20,9 +21,10 @@ export default function NewGroupPage() {
   const [seasons, setSeasons] = useState<{ id: string; name: string; competitions: { name: string } | null }[]>([])
   const [serverErr, setServerErr] = useState('')
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Fields>({
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<Fields>({
     resolver: zodResolver(schema),
   })
+  const seasonId = watch('seasonId')
 
   useEffect(() => {
     getSupabaseClient()
@@ -35,30 +37,9 @@ export default function NewGroupPage() {
 
   const onSubmit = async (data: Fields) => {
     setServerErr('')
-    const supabase = getSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setServerErr('Not signed in'); return }
-
-    // Create group (no season_id — groups are season-agnostic)
-    const { data: group, error: gErr } = await supabase
-      .from('pick_groups')
-      .insert({ name: data.name, created_by: user.id })
-      .select('id')
-      .single()
-
-    if (gErr || !group) { setServerErr(gErr?.message ?? 'Failed to create group'); return }
-
-    // Add creator as admin member
-    await supabase.from('pick_group_members').insert({
-      pick_group_id: group.id, user_id: user.id, role: 'admin',
-    })
-
-    // Link to the selected season
-    await supabase.from('pick_group_seasons').insert({
-      pick_group_id: group.id, season_id: data.seasonId,
-    })
-
-    router.push(`/groups/${group.id}`)
+    const result = await createGroupAction(data.name, data.seasonId)
+    if (result?.error) setServerErr(result.error)
+    // on success, server action redirects to the group page
   }
 
   return (
@@ -96,7 +77,7 @@ export default function NewGroupPage() {
           <p className="text-sm text-red-400 bg-red-950/40 border border-red-800 rounded-lg px-3 py-2">{serverErr}</p>
         )}
 
-        <Button type="submit" loading={isSubmitting} size="lg" className="w-full">
+        <Button type="submit" loading={isSubmitting} disabled={!seasonId} size="lg" className="w-full">
           Create group
         </Button>
       </form>

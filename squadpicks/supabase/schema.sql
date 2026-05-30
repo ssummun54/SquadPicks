@@ -294,17 +294,15 @@ begin
 end;
 $$;
 
--- Score group standings after all matches in a group complete
+-- Score group standings: 1pt per correct position, max 4pts for all 4 correct
 create or replace function score_group_predictions(p_group_id uuid)
 returns void
 language plpgsql security definer
 as $$
 declare
-  v_exact int := 2;
-  v_qual  int := 1;
+  v_pts int := 1;
 begin
-  select sr.exact_position_points, sr.qualified_points
-  into v_exact, v_qual
+  select sr.exact_position_points into v_pts
   from tournament_groups tg
   join rounds r on r.id = tg.round_id
   join scoring_rules sr on sr.season_id = r.season_id and sr.round_slug = r.slug
@@ -313,14 +311,10 @@ begin
   update group_predictions gp
   set
     points_exact_position = case
-      when gt.final_position = gp.predicted_position then v_exact
+      when gt.final_position = gp.predicted_position then v_pts
       else 0
     end,
-    points_qualified = case
-      when gt.final_position = gp.predicted_position then 0
-      when gt.final_position <= 2 and gp.predicted_position <= 2 then v_qual
-      else 0
-    end,
+    points_qualified = 0,
     updated_at = now()
   from group_teams gt
   where gp.group_id = p_group_id
@@ -524,3 +518,14 @@ create policy "bp_update" on bracket_predictions
       where m.round_id = bm.round_id and m.kickoff_at <= now()
     )
   );
+
+-- ============================================================
+-- ROLE GRANTS
+-- PostgreSQL checks privileges before RLS policies.
+-- Without these, anon/authenticated get "permission denied"
+-- even with permissive RLS policies.
+-- ============================================================
+grant usage on schema public to anon, authenticated;
+grant select on all tables in schema public to anon, authenticated;
+grant insert, update, delete on all tables in schema public to authenticated;
+grant all on all sequences in schema public to authenticated;

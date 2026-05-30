@@ -54,6 +54,7 @@ export interface Database {
           home_team_id: string | null; away_team_id: string | null
           kickoff_at: string; home_score: number | null; away_score: number | null
           penalty_winner_id: string | null
+          result_method: '90' | 'ET' | 'PK' | null
           status: 'scheduled' | 'live' | 'completed' | 'postponed'
           venue: string | null; match_day: number | null; bracket_slot: string | null
           external_id: string | null
@@ -63,6 +64,7 @@ export interface Database {
           home_team_id?: string | null; away_team_id?: string | null
           kickoff_at: string; home_score?: number | null; away_score?: number | null
           penalty_winner_id?: string | null
+          result_method?: '90' | 'ET' | 'PK' | null
           status?: 'scheduled' | 'live' | 'completed' | 'postponed'
           venue?: string | null; match_day?: number | null; bracket_slot?: string | null
           external_id?: string | null
@@ -71,6 +73,7 @@ export interface Database {
           group_id: string | null; home_team_id: string | null; away_team_id: string | null
           kickoff_at: string; home_score: number | null; away_score: number | null
           penalty_winner_id: string | null
+          result_method: '90' | 'ET' | 'PK' | null
           status: 'scheduled' | 'live' | 'completed' | 'postponed'
           venue: string | null; match_day: number | null; bracket_slot: string | null
           external_id: string | null
@@ -102,33 +105,37 @@ export interface Database {
         Relationships: R
       }
       match_predictions: {
-        Row:    { id: string; user_id: string; match_id: string; home_score: number; away_score: number; points_exact: number; points_outcome: number; created_at: string; updated_at: string }
-        Insert: { id?: string; user_id: string; match_id: string; home_score: number; away_score: number }
-        Update: Partial<{ home_score: number; away_score: number }>
+        Row:    { id: string; user_id: string; match_id: string; pick_group_id: string | null; home_score: number; away_score: number; predicted_method: '90' | 'ET' | 'PK' | null; points_exact: number; points_outcome: number; created_at: string; updated_at: string }
+        Insert: { id?: string; user_id: string; match_id: string; pick_group_id?: string | null; home_score: number; away_score: number; predicted_method?: '90' | 'ET' | 'PK' | null }
+        Update: Partial<{ home_score: number; away_score: number; pick_group_id: string | null; predicted_method: '90' | 'ET' | 'PK' | null }>
         Relationships: R
       }
       group_predictions: {
-        Row:    { id: string; user_id: string; group_id: string; team_id: string; predicted_position: number; points_exact_position: number; points_qualified: number; created_at: string; updated_at: string }
-        Insert: { id?: string; user_id: string; group_id: string; team_id: string; predicted_position: number }
-        Update: Partial<{ predicted_position: number }>
+        Row:    { id: string; user_id: string; group_id: string; team_id: string; pick_group_id: string | null; predicted_position: number; points_exact_position: number; points_qualified: number; created_at: string; updated_at: string }
+        Insert: { id?: string; user_id: string; group_id: string; team_id: string; pick_group_id?: string | null; predicted_position: number }
+        Update: Partial<{ predicted_position: number; pick_group_id: string | null }>
         Relationships: R
       }
       bracket_predictions: {
-        Row:    { id: string; user_id: string; match_id: string; predicted_winner_id: string; points_winner: number; created_at: string; updated_at: string }
-        Insert: { id?: string; user_id: string; match_id: string; predicted_winner_id: string }
-        Update: Partial<{ predicted_winner_id: string }>
+        Row:    { id: string; user_id: string; match_id: string; pick_group_id: string | null; predicted_winner_id: string; predicted_home_score: number | null; predicted_away_score: number | null; predicted_result_method: '90' | 'ET' | 'PK' | null; points_winner: number; points_score: number; points_method: number; created_at: string; updated_at: string }
+        Insert: { id?: string; user_id: string; match_id: string; pick_group_id?: string | null; predicted_winner_id: string; predicted_home_score?: number | null; predicted_away_score?: number | null; predicted_result_method?: '90' | 'ET' | 'PK' | null }
+        Update: Partial<{ predicted_winner_id: string; pick_group_id: string | null; predicted_home_score: number | null; predicted_away_score: number | null; predicted_result_method: '90' | 'ET' | 'PK' | null }>
         Relationships: R
       }
       scoring_rules: {
-        Row:    { id: string; season_id: string; round_slug: string; exact_score_points: number; correct_outcome_points: number; exact_position_points: number; qualified_points: number; correct_winner_points: number }
-        Insert: { id?: string; season_id: string; round_slug: string; exact_score_points?: number; correct_outcome_points?: number; exact_position_points?: number; qualified_points?: number; correct_winner_points?: number }
-        Update: Partial<{ exact_score_points: number; correct_outcome_points: number; exact_position_points: number; qualified_points: number; correct_winner_points: number }>
+        Row:    { id: string; season_id: string; round_slug: string; exact_score_points: number; correct_outcome_points: number; exact_position_points: number; qualified_points: number; correct_winner_points: number; correct_method_points: number }
+        Insert: { id?: string; season_id: string; round_slug: string; exact_score_points?: number; correct_outcome_points?: number; exact_position_points?: number; qualified_points?: number; correct_winner_points?: number; correct_method_points?: number }
+        Update: Partial<{ exact_score_points: number; correct_outcome_points: number; exact_position_points: number; qualified_points: number; correct_winner_points: number; correct_method_points: number }>
         Relationships: R
       }
     }
     Views: {
       season_leaderboard: {
         Row: { user_id: string; username: string; display_name: string | null; avatar_url: string | null; season_id: string; total_points: number; rank: number }
+        Relationships: R
+      }
+      pick_group_leaderboard: {
+        Row: { user_id: string; username: string; display_name: string | null; avatar_url: string | null; pick_group_id: string; season_id: string; total_points: number; rank: number }
         Relationships: R
       }
     }

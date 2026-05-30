@@ -12,10 +12,10 @@
   /* Full wordmark gradient: red → purple → blue */
   --sp-gradient:    linear-gradient(90deg, #e8003d 0%, #7b2dff 50%, #3d7fff 100%);
 
-  /* Surface — deep navy to match logo background */
-  --sp-bg:          #080914;
-  --sp-surface:     #0f1228;
-  --sp-border:      #1e2248;
+  /* Surface — dark navy gradient base */
+  --sp-bg:          #0a0d28;
+  --sp-surface:     #0e1235;
+  --sp-border:      #1a2050;
 
   /* Text */
   --sp-text:        #f1f5f9;
@@ -33,15 +33,20 @@
   --color-sp-border:   var(--sp-border);
   --color-sp-text:     var(--sp-text);
   --color-sp-muted:    var(--sp-muted);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-body), system-ui, sans-serif;
+  --font-heading: var(--font-heading), system-ui, sans-serif;
 }
 
 html, body {
+  background: linear-gradient(180deg, #0a0d28 0%, #060810 100%) fixed;
   background-color: var(--sp-bg);
   color: var(--sp-text);
-  font-family: var(--font-sans, system-ui, sans-serif);
+  font-family: var(--font-sans);
   min-height: 100%;
+}
+
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: var(--font-heading);
 }
 
 /* Matches the SQUADPICKS wordmark gradient */
@@ -50,6 +55,58 @@ html, body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Hero entrance animation */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-hero {
+  opacity: 0;
+  animation: fadeSlideUp 0.6s ease forwards;
+}
+.animate-hero-1 { animation-delay: 0s;    }
+.animate-hero-2 { animation-delay: 0.15s; }
+.animate-hero-3 { animation-delay: 0.3s;  }
+.animate-hero-4 { animation-delay: 0.45s; }
+.animate-hero-5 { animation-delay: 0.6s;  }
+
+/* Dramatic wordmark entrance */
+@keyframes dramaticEntrance {
+  0% {
+    opacity: 0;
+    transform: scale(3.5) translateY(-16px);
+    filter: blur(24px);
+    letter-spacing: 0.25em;
+  }
+  50% {
+    opacity: 1;
+    filter: blur(2px);
+  }
+  75% {
+    transform: scale(0.96) translateY(4px);
+    letter-spacing: -0.01em;
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    letter-spacing: normal;
+    filter: blur(0px);
+  }
+}
+
+.animate-dramatic {
+  opacity: 0;
+  animation: dramaticEntrance 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Utility: pill badge */

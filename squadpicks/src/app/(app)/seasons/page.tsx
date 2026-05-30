@@ -11,7 +11,7 @@ export default async function SeasonsPage() {
     supabase.from('sports').select('id, name, slug').order('name'),
     supabase
       .from('seasons')
-      .select('id, name, year, status, competitions(id, name, short_name, slug, logo_url, host_country, sport_id, sports(name, slug))')
+      .select('id, name, year, status, competitions(id, name, short_name, slug, logo_url, host_country, sport_id, sports(name, slug)), rounds(slug, type, prediction_window)')
       .order('year', { ascending: false }),
   ])
 

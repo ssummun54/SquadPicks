@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod/v4'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { getSupabaseClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -55,7 +54,6 @@ const schema = z.object({
 type Fields = z.infer<typeof schema>
 
 export default function RegisterPage() {
-  const router = useRouter()
   const [serverErr, setServerErr] = useState('')
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Fields>({
@@ -66,18 +64,12 @@ export default function RegisterPage() {
     setServerErr('')
     const supabase = getSupabaseClient()
     const { error } = await supabase.auth.signUp({
-      email:    data.email,
+      email: data.email,
       password: data.password,
-      options: {
-        data: {
-          username:     data.username,
-          display_name: data.username,
-        },
-      },
+      options: { data: { username: data.username, display_name: data.username } },
     })
     if (error) { setServerErr(error.message); return }
-    router.push('/dashboard')
-    router.refresh()
+    window.location.href = '/dashboard'
   }
 
   return (

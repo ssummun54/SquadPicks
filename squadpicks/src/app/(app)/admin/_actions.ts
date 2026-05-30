@@ -12,14 +12,26 @@ async function requireAdmin() {
 }
 
 // Manual score override (fallback when API sync misses a match)
-export async function overrideMatchScore(matchId: string, homeScore: number, awayScore: number) {
+export async function overrideMatchScore(
+  matchId: string,
+  homeScore: number,
+  awayScore: number,
+  resultMethod: '90' | 'ET' | 'PK' | null = null,
+  penaltyWinnerId: string | null = null
+) {
   await requireAdmin()
 
   const service = getSupabaseService()
 
   const { data: match, error } = await service
     .from('matches')
-    .update({ home_score: homeScore, away_score: awayScore, status: 'completed' })
+    .update({
+      home_score: homeScore,
+      away_score: awayScore,
+      result_method: resultMethod,
+      penalty_winner_id: resultMethod === 'PK' ? penaltyWinnerId : null,
+      status: 'completed',
+    })
     .eq('id', matchId)
     .select('id, rounds!inner(type)')
     .single()
@@ -28,7 +40,10 @@ export async function overrideMatchScore(matchId: string, homeScore: number, awa
 
   await service.rpc('score_match_predictions', { p_match_id: matchId })
 
-  if ((match as any).rounds?.type === 'knockout') {
+  const roundType = (match as { rounds?: { type?: string } | { type?: string }[] }).rounds
+  const isKnockout = Array.isArray(roundType) ? roundType[0]?.type === 'knockout' : roundType?.type === 'knockout'
+
+  if (isKnockout) {
     await service.rpc('score_bracket_predictions', { p_match_id: matchId })
   }
 

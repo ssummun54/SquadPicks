@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PUBLIC_PATHS = ['/', '/login', '/register', '/leaderboard']
+const PUBLIC_PATHS = ['/', '/login', '/register', '/leaderboard', '/auth/callback']
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -28,6 +28,7 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
+
   const isPublic = PUBLIC_PATHS.some(p => pathname === p || pathname.startsWith('/leaderboard'))
 
   if (!user && !isPublic) {

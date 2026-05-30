@@ -11,6 +11,7 @@ interface Season {
     host_country: string | null; sport_id: string
     sports: { name: string; slug: string } | null
   } | null
+  rounds?: { slug: string; type: string; prediction_window: string }[]
 }
 
 interface Props {
@@ -28,6 +29,7 @@ const STATUS_COLOR: Record<string, string> = {
   upcoming:  'bg-yellow-400/20 text-yellow-300',
   completed: 'bg-slate-700 text-slate-400',
 }
+
 
 export function SeasonsClient({ sports, seasons }: Props) {
   const [sportFilter, setSportFilter]   = useState<string>('all')
@@ -122,14 +124,12 @@ export function SeasonsClient({ sports, seasons }: Props) {
                 )}
 
                 <div className="flex gap-2 mt-auto pt-1">
-                  {season.status !== 'completed' && (
-                    <Link
-                      href={`/predict/${season.id}/group-stage`}
-                      className="flex-1 text-center px-3 py-2 rounded-lg bg-brand text-white text-xs font-semibold hover:bg-brand-dark transition-colors"
-                    >
-                      Predict
-                    </Link>
-                  )}
+                  <Link
+                    href={`/seasons/${season.id}`}
+                    className="flex-1 text-center px-3 py-2 rounded-lg bg-brand text-white text-xs font-semibold hover:bg-brand-dark transition-colors"
+                  >
+                    View event
+                  </Link>
                   <Link
                     href={`/leaderboard?season=${season.id}`}
                     className="flex-1 text-center px-3 py-2 rounded-lg border border-slate-600 text-slate-300 text-xs font-medium hover:border-accent hover:text-accent transition-colors"

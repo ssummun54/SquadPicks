@@ -8,7 +8,6 @@ export default async function DashboardPage() {
   const supabase = await getSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Load active seasons (with rounds to gate playlist visibility) + user's pick groups
   const [seasonsResult, groupsResult] = await Promise.all([
     supabase
       .from('seasons')
@@ -24,28 +23,29 @@ export default async function DashboardPage() {
       : Promise.resolve({ data: [] }),
   ])
 
-  const seasons = seasonsResult.data ?? []
-  const myGroups = (groupsResult.data ?? []).map((m: any) => m.pick_groups).filter(Boolean)
+  const seasons  = seasonsResult.data ?? []
+const myGroups = (groupsResult.data ?? []).map((m: any) => m.pick_groups).filter(Boolean)
 
   return (
     <div className="flex flex-col gap-10">
+
       {/* Header */}
-      <div>
+      <div className="animate-hero animate-hero-1">
         <h1 className="text-3xl font-black text-slate-100">Dashboard</h1>
         <p className="text-slate-400 mt-1">Pick your predictions before kickoff — then check back to see the scores.</p>
       </div>
 
       {/* Active tournaments */}
-      <section>
-        <h2 className="text-lg font-bold text-slate-200 mb-4">Open prediction sets</h2>
+      <section className="animate-hero animate-hero-2">
+        <h2 className="text-lg font-bold text-slate-200 mb-4">{myGroups.length > 0 ? 'Make your picks' : 'Choose your Events'}</h2>
         {seasons.length === 0 ? (
-          <div className="rounded-xl border border-slate-700 bg-slate-800 p-8 text-center text-slate-400">
+          <div className="rounded-xl border border-slate-700 bg-slate-800/60 p-8 text-center text-slate-400">
             No active tournaments right now. Check back soon.
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 gap-4">
             {seasons.map((season: any) => (
-              <div key={season.id} className="rounded-xl border border-slate-700 bg-slate-800 p-6 flex flex-col gap-4">
+              <div key={season.id} className="rounded-xl border border-slate-700 bg-slate-800/60 p-6 flex flex-col gap-4 hover:border-slate-500 transition-colors">
                 <div>
                   <div className="text-xs text-slate-400 font-medium uppercase tracking-wide">
                     {season.competitions?.name}
@@ -56,7 +56,6 @@ export default async function DashboardPage() {
                     <span className="text-xs text-slate-400 capitalize">{season.status}</span>
                   </div>
                 </div>
-
                 <PlaylistLinks season={season as any} />
               </div>
             ))}
@@ -65,7 +64,7 @@ export default async function DashboardPage() {
       </section>
 
       {/* My pick groups */}
-      <section>
+      <section className="animate-hero animate-hero-3">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-slate-200">My Groups</h2>
           <Link href="/groups" className="text-sm text-accent hover:text-accent/80 transition-colors">
@@ -74,7 +73,7 @@ export default async function DashboardPage() {
         </div>
 
         {myGroups.length === 0 ? (
-          <div className="rounded-xl border border-slate-700 bg-slate-800 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="rounded-xl border border-slate-700 bg-slate-800/60 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
               <div className="font-semibold text-slate-200">No groups yet</div>
               <div className="text-sm text-slate-400">Create a group and invite your squad with a code.</div>
@@ -89,7 +88,7 @@ export default async function DashboardPage() {
               <Link
                 key={g.id}
                 href={`/groups/${g.id}`}
-                className="rounded-xl border border-slate-700 bg-slate-800 px-5 py-4 hover:border-accent transition-colors"
+                className="rounded-xl border border-slate-700 bg-slate-800/60 px-5 py-4 hover:border-accent transition-colors"
               >
                 <div className="font-semibold text-slate-200">{g.name}</div>
                 <div className="text-xs text-slate-400 mt-0.5">
@@ -106,19 +105,6 @@ export default async function DashboardPage() {
           </div>
         )}
       </section>
-
-      {/* Points legend */}
-      <section className="rounded-xl border border-slate-700 bg-slate-800 p-6">
-        <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wide mb-4">Scoring guide</h2>
-        <div className="grid sm:grid-cols-2 gap-x-8 gap-y-2 text-sm">
-          {SCORING_GUIDE.map(row => (
-            <div key={row.label} className="flex items-center justify-between gap-4 py-1 border-b border-slate-700 last:border-0">
-              <span className="text-slate-400">{row.label}</span>
-              <span className="font-bold text-accent shrink-0">{row.pts}</span>
-            </div>
-          ))}
-        </div>
-      </section>
     </div>
   )
 }
@@ -129,14 +115,11 @@ function PlaylistLinks({ season }: { season: { id: string; rounds: Round[] } }) 
   const rounds: Round[] = season.rounds ?? []
 
   const groupOpen    = rounds.some(r => r.slug === 'group_stage' && r.prediction_window === 'open')
-  const knockoutOpen = rounds.some(r => r.type === 'knockout'   && r.prediction_window === 'open')
+  const knockoutOpen = rounds.some(r => r.type === 'knockout' && r.slug !== 'final' && r.prediction_window === 'open')
+  const finalOpen    = rounds.some(r => r.slug === 'final' && r.prediction_window === 'open')
 
-  if (!groupOpen && !knockoutOpen) {
-    return (
-      <div className="text-sm text-slate-500 text-center py-2">
-        Predictions opening soon.
-      </div>
-    )
+  if (!groupOpen && !knockoutOpen && !finalOpen) {
+    return <div className="text-sm text-slate-500 text-center py-2">Predictions opening soon.</div>
   }
 
   return (
@@ -144,39 +127,39 @@ function PlaylistLinks({ season }: { season: { id: string; rounds: Round[] } }) 
       {groupOpen && (
         <Link
           href={`/predict/${season.id}/group-stage`}
-          className="flex items-center justify-between px-4 py-3 rounded-lg bg-slate-900 border border-slate-600 hover:border-accent transition-colors group"
+          className="flex items-center justify-between px-4 py-3 rounded-lg bg-slate-900/80 border border-slate-600 hover:border-accent hover:bg-accent/5 transition-all group"
         >
           <div>
             <div className="font-semibold text-slate-200 group-hover:text-accent transition-colors">Group Stage</div>
-            <div className="text-xs text-slate-400">Predict all match scores + group standings</div>
+            <div className="text-xs text-slate-400">Pick scores for every match + predict final group standings</div>
           </div>
-          <span className="text-slate-500 group-hover:text-accent">→</span>
+          <span className="text-slate-500 group-hover:text-accent transition-colors text-lg">→</span>
         </Link>
       )}
       {knockoutOpen && (
         <Link
           href={`/predict/${season.id}/knockout`}
-          className="flex items-center justify-between px-4 py-3 rounded-lg bg-slate-900 border border-slate-600 hover:border-accent transition-colors group"
+          className="flex items-center justify-between px-4 py-3 rounded-lg bg-slate-900/80 border border-slate-600 hover:border-accent hover:bg-accent/5 transition-all group"
         >
           <div>
             <div className="font-semibold text-slate-200 group-hover:text-accent transition-colors">Knockout Bracket</div>
             <div className="text-xs text-slate-400">Pick winners from R32 through the Final</div>
           </div>
-          <span className="text-slate-500 group-hover:text-accent">→</span>
+          <span className="text-slate-500 group-hover:text-accent transition-colors text-lg">→</span>
+        </Link>
+      )}
+      {finalOpen && (
+        <Link
+          href={`/predict/${season.id}/final`}
+          className="flex items-center justify-between px-4 py-3 rounded-lg bg-slate-900/80 border border-slate-600 hover:border-accent hover:bg-accent/5 transition-all group"
+        >
+          <div>
+            <div className="font-semibold text-slate-200 group-hover:text-accent transition-colors">Final</div>
+            <div className="text-xs text-slate-400">Pick the score, winner + how it's decided</div>
+          </div>
+          <span className="text-slate-500 group-hover:text-accent transition-colors text-lg">→</span>
         </Link>
       )}
     </div>
   )
 }
-
-const SCORING_GUIDE = [
-  { label: 'Exact match score',          pts: '3 pts' },
-  { label: 'Correct result (W/D/L)',     pts: '1 pt'  },
-  { label: 'Exact group position',       pts: '2 pts' },
-  { label: 'Correct top-2 qualifier',    pts: '1 pt'  },
-  { label: 'Round of 32 winner',         pts: '2 pts' },
-  { label: 'Round of 16 winner',         pts: '3 pts' },
-  { label: 'Quarter-final winner',       pts: '4 pts' },
-  { label: 'Semi-final winner',          pts: '5 pts' },
-  { label: 'Final winner (Champion)',    pts: '8 pts' },
-]

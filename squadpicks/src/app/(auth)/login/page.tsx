@@ -59,13 +59,11 @@ function LoginForm() {
     setServerErr('')
     const supabase = getSupabaseClient()
     const { error } = await supabase.auth.signInWithPassword({
-      email:    data.email,
+      email: data.email,
       password: data.password,
     })
     if (error) { setServerErr(error.message); return }
-    const redirect = searchParams.get('redirect') ?? '/dashboard'
-    router.push(redirect)
-    router.refresh()
+    window.location.href = searchParams.get('redirect') ?? '/dashboard'
   }
 
   return (

@@ -1,5 +1,5 @@
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { SyncButton, SeedFixturesButton, MatchOverrideForm, GroupStandingsForm } from './_client'
+import { SyncButton, SeedTeamsButton, SeedFixturesButton, SeedCLFinalButton, MatchOverrideForm, GroupStandingsForm } from './_client'
 import type { MatchRow, GroupRow } from './_client'
 import { format } from 'date-fns'
 import type { Metadata } from 'next'
@@ -35,7 +35,7 @@ export default async function AdminPage() {
       ? supabase
           .from('matches')
           .select(`
-            id, kickoff_at, status, home_score, away_score, round_id, external_id,
+            id, kickoff_at, status, home_score, away_score, result_method, penalty_winner_id, round_id, external_id,
             home_team:home_team_id(id, name, short_name),
             away_team:away_team_id(id, name, short_name)
           `)
@@ -68,7 +68,9 @@ export default async function AdminPage() {
         </div>
         <div className="flex flex-col gap-2 items-end">
           <SyncButton />
+          <SeedTeamsButton />
           <SeedFixturesButton />
+          <SeedCLFinalButton />
         </div>
       </div>
 
@@ -96,6 +98,9 @@ export default async function AdminPage() {
                   status:      match.status,
                   home_score:  match.home_score,
                   away_score:  match.away_score,
+                  result_method: match.result_method,
+                  penalty_winner_id: match.penalty_winner_id,
+                  round_type:   round.type,
                   home_team:   match.home_team,
                   away_team:   match.away_team,
                   external_id: match.external_id,

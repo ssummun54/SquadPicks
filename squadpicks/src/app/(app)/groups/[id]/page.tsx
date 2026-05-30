@@ -17,11 +17,11 @@ export default async function GroupPage({ params }: Props) {
     supabase.from('pick_group_members').select('user_id, role, profiles(username, display_name)').eq('pick_group_id', id),
     supabase
       .from('pick_group_seasons')
-      .select('season_id, seasons(id, name, status, competitions(name))')
+      .select('season_id, seasons(id, name, status, competitions(name), rounds(slug, type, prediction_window))')
       .eq('pick_group_id', id)
       .order('joined_at', { ascending: true }),
     // Seasons this group has NOT joined yet (for the "Join new event" button)
-    supabase.from('seasons').select('id, name, status, competitions(name)').neq('status', 'completed'),
+    supabase.from('seasons').select('id, name, status, competitions(name), rounds(slug, type, prediction_window)').neq('status', 'completed'),
   ])
 
   if (!groupRes.data) notFound()
@@ -37,10 +37,10 @@ export default async function GroupPage({ params }: Props) {
   const seasonLeaderboards: Record<string, any[]> = {}
   for (const season of joinedSeasons) {
     const { data } = await supabase
-      .from('season_leaderboard')
+      .from('pick_group_leaderboard')
       .select('*')
       .eq('season_id', season.id)
-      .in('user_id', memberIds)
+      .eq('pick_group_id', id)
       .order('rank')
     seasonLeaderboards[season.id] = (data ?? []).map((r: any, i: number) => ({ ...r, groupRank: i + 1 }))
   }
