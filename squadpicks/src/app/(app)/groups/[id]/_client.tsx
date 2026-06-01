@@ -106,7 +106,7 @@ export function GroupPageClient({
             {group.invite_code}
           </button>
           <span className="text-xs text-slate-500">
-            {copied ? '✓ Link copied!' : typeof navigator !== 'undefined' && navigator.share ? 'Tap to share' : 'Tap to copy invite link'}
+            {copied ? '✓ Link copied!' : ('share' in navigator) ? 'Tap to share' : 'Tap to copy invite link'}
           </span>
           {isAdmin && (
             <button
