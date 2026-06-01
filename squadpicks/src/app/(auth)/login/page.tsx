@@ -104,14 +104,6 @@ export default function LoginPage() {
       <h1 className="text-xl font-bold text-slate-100 mb-1">Welcome back</h1>
       <p className="text-sm text-slate-400 mb-6">Sign in to your SquadPicks account</p>
 
-      <GoogleButton />
-
-      <div className="flex items-center gap-3 my-5">
-        <div className="flex-1 h-px bg-slate-700" />
-        <span className="text-xs text-slate-500">or</span>
-        <div className="flex-1 h-px bg-slate-700" />
-      </div>
-
       <Suspense fallback={<div className="h-40 animate-pulse bg-slate-700 rounded-lg" />}>
         <LoginForm />
       </Suspense>
