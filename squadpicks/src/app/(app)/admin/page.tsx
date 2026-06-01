@@ -1,5 +1,5 @@
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { SyncButton, SeedTeamsButton, SeedFixturesButton, SeedCLFinalButton, MatchOverrideForm, GroupStandingsForm } from './_client'
+import { SyncButton, SeedTeamsButton, SeedFixturesButton, SeedCLFinalButton, MatchOverrideForm, GroupStandingsForm, MarkSeasonCompletedButton } from './_client'
 import type { MatchRow, GroupRow } from './_client'
 import { format } from 'date-fns'
 import type { Metadata } from 'next'
@@ -71,6 +71,7 @@ export default async function AdminPage() {
           <SeedTeamsButton />
           <SeedFixturesButton />
           <SeedCLFinalButton />
+          <MarkSeasonCompletedButton seasonId={seasonId} seasonName={seasons[0].name} />
         </div>
       </div>
 

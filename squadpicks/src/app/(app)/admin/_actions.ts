@@ -74,6 +74,20 @@ export async function scoreGroupStandings(
   revalidatePath('/leaderboard')
 }
 
+// Mark a season as completed
+export async function markSeasonCompleted(seasonId: string) {
+  await requireAdmin()
+  const service = getSupabaseService()
+  const { error } = await service
+    .from('seasons')
+    .update({ status: 'completed' })
+    .eq('id', seasonId)
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin')
+  revalidatePath('/dashboard')
+  revalidatePath('/leaderboard')
+}
+
 // Trigger a manual sync (same logic as cron, but called from admin UI)
 export async function triggerSync(): Promise<{ synced: number; results: string[] }> {
   await requireAdmin()

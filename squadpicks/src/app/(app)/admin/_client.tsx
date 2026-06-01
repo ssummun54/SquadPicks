@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { overrideMatchScore, scoreGroupStandings, triggerSync } from './_actions'
+import { overrideMatchScore, scoreGroupStandings, triggerSync, markSeasonCompleted } from './_actions'
 
 export interface MatchRow {
   id: string
@@ -314,5 +314,29 @@ export function GroupStandingsForm({ group }: { group: GroupRow }) {
         {isPending ? 'Saving…' : done ? '✓ Saved' : 'Save standings'}
       </button>
     </form>
+  )
+}
+
+export function MarkSeasonCompletedButton({ seasonId, seasonName }: { seasonId: string; seasonName: string }) {
+  const [isPending, startTransition] = useTransition()
+  const [done, setDone] = useState(false)
+
+  function handle() {
+    if (!confirm(`Mark "${seasonName}" as completed? This cannot be undone from the UI.`)) return
+    startTransition(async () => {
+      await markSeasonCompleted(seasonId)
+      setDone(true)
+    })
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handle}
+      disabled={isPending || done}
+      className="px-3 py-1.5 rounded-lg border border-red-700 text-red-400 text-sm font-medium hover:bg-red-950/40 disabled:opacity-40 transition-colors"
+    >
+      {isPending ? 'Saving…' : done ? '✓ Marked completed' : 'Mark season as completed'}
+    </button>
   )
 }

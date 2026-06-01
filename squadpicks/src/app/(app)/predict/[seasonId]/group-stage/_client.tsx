@@ -95,6 +95,22 @@ function groupMatchesByDay(matches: Match[]): { date: Date; matches: Match[] }[]
   return days
 }
 
+function PencilIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    </svg>
+  )
+}
+
+function CheckIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  )
+}
+
 function LockIcon({ open = false }: { open?: boolean }) {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -353,23 +369,30 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
                           {standingSaved[group.id] === 'saved'  && <span className="text-xs text-accent">✓ Saved</span>}
                           {standingSaved[group.id] === 'error'  && <span className="text-xs text-red-400">Error</span>}
                           {standingsAllowed && (
-                            <button
-                              type="button"
-                              disabled={standingSaved[group.id] === 'saving'}
-                              onClick={() => {
-                                if (standingsSubmitted) unlockStandings(group.id)
-                                else saveStandings(group.id, order)
-                              }}
-                              className={`w-9 h-9 rounded-md border flex items-center justify-center text-sm transition-colors shrink-0 ${
-                                standingsSubmitted
-                                  ? 'border-accent/50 bg-accent/10 text-accent hover:bg-accent/20'
-                                  : 'border-slate-600 bg-slate-800 text-slate-300 hover:border-accent hover:text-accent'
-                              } disabled:opacity-40 disabled:hover:border-slate-600 disabled:hover:text-slate-300`}
-                              aria-label={standingsSubmitted ? 'Edit standings prediction' : 'Submit standings prediction'}
-                              title={standingsSubmitted ? 'Edit standings prediction' : 'Submit standings prediction'}
-                            >
-                              <LockIcon open={!standingsSubmitted} />
-                            </button>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                disabled={!standingsSubmitted}
+                                onClick={() => unlockStandings(group.id)}
+                                className={`w-8 h-8 rounded-md border flex items-center justify-center transition-colors ${
+                                  !standingsSubmitted ? 'border-accent/50 bg-accent/10 text-accent' : 'border-slate-500 bg-slate-800 text-slate-300 hover:border-accent/50 hover:text-accent'
+                                } disabled:cursor-default`}
+                                title="Edit standings"
+                              >
+                                <PencilIcon />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={standingsSubmitted || standingSaved[group.id] === 'saving'}
+                                onClick={() => saveStandings(group.id, order)}
+                                className={`w-8 h-8 rounded-md border flex items-center justify-center transition-colors ${
+                                  standingsSubmitted ? 'border-accent/50 bg-accent/10 text-accent' : 'border-slate-700 bg-slate-800 text-slate-300 hover:text-accent hover:border-accent/50'
+                                } disabled:cursor-default`}
+                                title="Save standings"
+                              >
+                                <CheckIcon />
+                              </button>
+                            </div>
                           )}
                         </span>
                       </div>
@@ -433,13 +456,21 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
                                   <div key={match.id} className={`rounded-lg px-3 sm:px-4 py-3 min-w-0 ${locked ? 'bg-slate-900/40' : 'bg-slate-900/70'}`}>
                                     <div className="text-xs text-slate-500 mb-2.5 flex items-center gap-2 min-w-0">
                                       <span>{time}</span>
-                                      {!predictionsAllowed && <span className="text-yellow-600">· Locked</span>}
+                                      {predictionsAllowed && (
+                                        <span className="flex items-center gap-1 text-slate-500" title="Locks at kickoff">
+                                          <LockIcon open />
+                                        </span>
+                                      )}
+                                      {locked && (
+                                        <span className="flex items-center gap-1 text-yellow-600">
+                                          <LockIcon /> Locked
+                                        </span>
+                                      )}
                                       {match.status === 'completed' && match.home_score !== null && (
                                         <span className="text-accent">Result: {match.home_score}–{match.away_score}</span>
                                       )}
                                       <span className="ml-auto text-xs shrink-0">
                                         {matchSaved[match.id] === 'saving' && <span className="text-slate-500">Saving…</span>}
-                                        {matchSaved[match.id] === 'saved'  && <span className="text-accent">✓</span>}
                                         {matchSaved[match.id] === 'error'  && <span className="text-red-400">Error</span>}
                                       </span>
                                     </div>
@@ -480,23 +511,30 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
                                         <span className="text-sm font-medium text-slate-200 truncate">{match.away_team?.short_name ?? match.away_team?.name ?? 'TBD'}</span>
                                       </span>
                                       {predictionsAllowed && (
-                                        <button
-                                          type="button"
-                                          disabled={(editable && !canSubmit) || matchSaved[match.id] === 'saving'}
-                                          onClick={() => {
-                                            if (submitted) unlockMatch(match.id)
-                                            else saveMatch(match.id, pred.home, pred.away)
-                                          }}
-                                          className={`w-9 h-9 rounded-md border flex items-center justify-center text-sm transition-colors shrink-0 ${
-                                            submitted
-                                              ? 'border-accent/50 bg-accent/10 text-accent hover:bg-accent/20'
-                                              : 'border-slate-600 bg-slate-800 text-slate-300 hover:border-accent hover:text-accent'
-                                          } disabled:opacity-40 disabled:hover:border-slate-600 disabled:hover:text-slate-300`}
-                                          aria-label={submitted ? 'Edit prediction' : 'Submit prediction'}
-                                          title={submitted ? 'Edit prediction' : 'Submit prediction'}
-                                        >
-                                          <LockIcon open={!submitted} />
-                                        </button>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                          <button
+                                            type="button"
+                                            disabled={!submitted || matchSaved[match.id] === 'saving'}
+                                            onClick={() => unlockMatch(match.id)}
+                                            className={`w-8 h-8 rounded-md border flex items-center justify-center transition-colors ${
+                                              !submitted ? 'border-accent/50 bg-accent/10 text-accent' : 'border-slate-500 bg-slate-800 text-slate-300 hover:border-accent/50 hover:text-accent'
+                                            } disabled:cursor-default`}
+                                            title="Edit prediction"
+                                          >
+                                            <PencilIcon />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            disabled={submitted || !canSubmit || matchSaved[match.id] === 'saving'}
+                                            onClick={() => saveMatch(match.id, pred.home, pred.away)}
+                                            className={`w-8 h-8 rounded-md border flex items-center justify-center transition-colors ${
+                                              submitted ? 'border-accent/50 bg-accent/10 text-accent' : canSubmit ? 'border-slate-700 bg-slate-800 text-slate-300 hover:text-accent hover:border-accent/50' : 'border-slate-700 bg-slate-800 text-slate-600'
+                                            } disabled:cursor-default`}
+                                            title="Save prediction"
+                                          >
+                                            <CheckIcon />
+                                          </button>
+                                        </div>
                                       )}
                                     </div>
                                   </div>

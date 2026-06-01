@@ -150,9 +150,15 @@ export default async function GroupStagePage({ params, searchParams }: Props) {
             <span className="text-xs text-slate-400">Per correct spot in the final standings — tiebreaker</span>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-slate-500 pt-1 border-t border-slate-700">
-          <span className="w-2 h-2 rounded-full bg-accent shrink-0" />
-          Your picks are sealed until the first match of each group kicks off.
+        <div className="flex flex-col gap-2 pt-1 border-t border-slate-700">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <span className="w-2 h-2 rounded-full bg-accent shrink-0" />
+            Match predictions are open until each match kicks off.
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <span className="w-2 h-2 rounded-full bg-brand shrink-0" />
+            Group standings predictions lock when the first match of the tournament kicks off.
+          </div>
         </div>
       </div>
 

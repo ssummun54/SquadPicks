@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod/v4'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { getSupabaseClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -47,22 +47,30 @@ const schema = z.object({
 type Fields = z.infer<typeof schema>
 
 function LoginForm() {
-  const router       = useRouter()
   const searchParams = useSearchParams()
   const [serverErr, setServerErr] = useState('')
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState('')
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Fields>({
+  const { register, handleSubmit, getValues, formState: { errors, isSubmitting } } = useForm<Fields>({
     resolver: zodResolver(schema),
   })
 
   const onSubmit = async (data: Fields) => {
     setServerErr('')
+    setUnconfirmedEmail('')
     const supabase = getSupabaseClient()
     const { error } = await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password,
     })
-    if (error) { setServerErr(error.message); return }
+    if (error) {
+      if (error.message.toLowerCase().includes('email not confirmed')) {
+        setUnconfirmedEmail(data.email)
+      } else {
+        setServerErr(error.message)
+      }
+      return
+    }
     window.location.href = searchParams.get('redirect') ?? '/dashboard'
   }
 
@@ -91,6 +99,21 @@ function LoginForm() {
         </p>
       )}
 
+      {unconfirmedEmail && (
+        <div className="text-sm bg-amber-950/40 border border-amber-700 rounded-lg px-3 py-2">
+          <p className="text-amber-300 font-medium mb-1">Email not verified</p>
+          <p className="text-amber-400/80 mb-2">
+            Check your inbox for the confirmation link.
+          </p>
+          <a
+            href={`/verify-otp?email=${encodeURIComponent(unconfirmedEmail)}`}
+            className="text-accent hover:text-accent/80 font-medium underline underline-offset-2"
+          >
+            Resend confirmation email
+          </a>
+        </div>
+      )}
+
       <Button type="submit" loading={isSubmitting} className="w-full mt-1">
         Sign in
       </Button>
@@ -103,6 +126,14 @@ export default function LoginPage() {
     <>
       <h1 className="text-xl font-bold text-slate-100 mb-1">Welcome back</h1>
       <p className="text-sm text-slate-400 mb-6">Sign in to your SquadPicks account</p>
+
+      <GoogleButton />
+
+      <div className="flex items-center gap-3 my-5">
+        <div className="flex-1 h-px bg-slate-700" />
+        <span className="text-xs text-slate-500">or</span>
+        <div className="flex-1 h-px bg-slate-700" />
+      </div>
 
       <Suspense fallback={<div className="h-40 animate-pulse bg-slate-700 rounded-lg" />}>
         <LoginForm />

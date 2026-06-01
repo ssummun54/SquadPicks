@@ -114,7 +114,9 @@ export function LandingClient() {
           {FEATURES.map((f, i) => (
             <ScrollReveal key={f.title} delay={i * 120}>
               <div className="flex flex-col items-center gap-3">
-                <span className="text-4xl">{f.icon}</span>
+                <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-accent">
+                  {f.icon}
+                </div>
                 <h3 className="font-bold text-slate-100">{f.title}</h3>
                 <p className="text-sm text-slate-400">{f.desc}</p>
               </div>
@@ -130,6 +132,8 @@ export function LandingClient() {
           <Link href="/login"       className="hover:text-slate-100 transition-colors">Login</Link>
           <Link href="/register"    className="hover:text-slate-100 transition-colors">Register</Link>
           <Link href="/leaderboard" className="hover:text-slate-100 transition-colors">Leaderboard</Link>
+          <Link href="/privacy"     className="hover:text-slate-100 transition-colors">Privacy</Link>
+          <Link href="/terms"       className="hover:text-slate-100 transition-colors">Terms</Link>
         </div>
       </footer>
     </>
@@ -138,17 +142,35 @@ export function LandingClient() {
 
 const FEATURES = [
   {
-    icon: '🔐',
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M7 11V8a5 5 0 0 1 10 0v3" />
+        <rect width="14" height="10" x="5" y="11" rx="2" />
+      </svg>
+    ),
     title: 'Sealed until kickoff',
     desc: 'No one sees your picks until the first ball is kicked. No copying, no gaming the system.',
   },
   {
-    icon: '🔗',
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
     title: 'Private groups',
     desc: 'Create a mini-league with a shareable invite code and compete against your crew.',
   },
   {
-    icon: '📊',
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 20V10" />
+        <path d="M12 20V4" />
+        <path d="M6 20v-6" />
+      </svg>
+    ),
     title: 'Global leaderboard',
     desc: 'See how you rank against every player on the platform, updated live after each match.',
   },

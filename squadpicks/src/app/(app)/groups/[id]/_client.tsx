@@ -34,12 +34,13 @@ export function GroupPageClient({
   group, members, seasons, availableSeasons, seasonLeaderboards, currentUserId, isAdmin,
 }: Props) {
   const router = useRouter()
-  const activeSeasonId = seasons[0]?.id ?? ''
+  const [activeSeasonId, setActiveSeasonId] = useState(seasons[0]?.id ?? '')
   const [showJoin, setShowJoin]             = useState(false)
   const [joiningId, setJoiningId]           = useState<string | null>(null)
   const [joinErr, setJoinErr]               = useState('')
   const [copied, setCopied]                 = useState(false)
 
+  const activeSeason = seasons.find(s => s.id === activeSeasonId) ?? seasons[0]
   const lb = activeSeasonId ? (seasonLeaderboards[activeSeasonId] ?? []) : []
 
   const handleJoinEvent = async (seasonId: string) => {
@@ -53,10 +54,34 @@ export function GroupPageClient({
     router.refresh()
   }
 
-  const copyCode = () => {
-    navigator.clipboard.writeText(group.invite_code)
+  const copyCode = async () => {
+    const url = `${window.location.origin}/join/${group.invite_code}`
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Join ${group.name} on SquadPicks`,
+          text: `I've invited you to my prediction group — join here:`,
+          url,
+        })
+        return
+      } catch {
+        // user cancelled or share failed — fall through to clipboard
+      }
+    }
+    navigator.clipboard.writeText(url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const [deleting, setDeleting] = useState(false)
+
+  const handleDelete = async () => {
+    if (!confirm(`Delete "${group.name}"? This cannot be undone.`)) return
+    setDeleting(true)
+    const supabase = getSupabaseClient()
+    const { error } = await supabase.from('pick_groups').delete().eq('id', group.id)
+    if (error) { alert(error.message); setDeleting(false); return }
+    router.push('/groups')
   }
 
   return (
@@ -80,7 +105,18 @@ export function GroupPageClient({
           >
             {group.invite_code}
           </button>
-          <span className="text-xs text-slate-500">{copied ? '✓ Copied!' : 'Tap to copy'}</span>
+          <span className="text-xs text-slate-500">
+            {copied ? '✓ Link copied!' : typeof navigator !== 'undefined' && navigator.share ? 'Tap to share' : 'Tap to copy invite link'}
+          </span>
+          {isAdmin && (
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="mt-2 text-xs text-red-500 hover:text-red-400 disabled:opacity-40 transition-colors"
+            >
+              {deleting ? 'Deleting…' : 'Delete group'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -103,18 +139,22 @@ export function GroupPageClient({
         </div>
       )}
 
-      {/* ── Event tabs + picks CTA ────────────────────────── */}
+      {/* ── Event tabs ────────────────────────────────────── */}
       {seasons.length > 0 && (
         <div className="animate-hero animate-hero-2 flex flex-col gap-3">
           <div className="flex items-center gap-2 flex-wrap">
             {seasons.map(s => (
-              <Link
+              <button
                 key={s.id}
-                href={predictionHref(s, group.id)}
-                className="px-4 py-2 rounded-lg text-sm font-semibold border border-brand/40 text-slate-200 bg-brand/10 hover:bg-brand hover:text-white hover:border-brand transition-colors"
+                onClick={() => setActiveSeasonId(s.id)}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-colors ${
+                  s.id === activeSeasonId
+                    ? 'bg-brand text-white border-brand'
+                    : 'border-slate-600 text-slate-400 hover:border-slate-400 hover:text-slate-200'
+                }`}
               >
                 {(s.competitions as any)?.name ?? s.name}
-              </Link>
+              </button>
             ))}
             {isAdmin && (
               <button
@@ -125,6 +165,21 @@ export function GroupPageClient({
               </button>
             )}
           </div>
+
+          {/* Predict CTA for the active event */}
+          {activeSeason && (
+            <div className="flex items-center gap-3">
+              <Link
+                href={predictionHref(activeSeason, group.id)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-accent/10 border border-accent/30 text-accent text-sm font-semibold hover:bg-accent/20 transition-colors"
+              >
+                Make your predictions →
+              </Link>
+              <span className="text-xs text-slate-500">
+                {(activeSeason.competitions as any)?.name ?? activeSeason.name}
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -166,7 +221,14 @@ export function GroupPageClient({
 
           {/* Standings — takes 2/3 */}
           <section className="lg:col-span-2">
-            <h2 className="text-base font-bold text-slate-200 mb-3">Standings</h2>
+            <div className="flex items-baseline gap-2 mb-3">
+              <h2 className="text-base font-bold text-slate-200">Standings</h2>
+              {activeSeason && (
+                <span className="text-xs text-slate-500">
+                  {(activeSeason.competitions as any)?.name ?? activeSeason.name}
+                </span>
+              )}
+            </div>
             {lb.length === 0 ? (
               <div className="rounded-xl border border-slate-700 bg-slate-800/60 p-8 text-center text-slate-400 text-sm">
                 No points yet — check back after the first matches.

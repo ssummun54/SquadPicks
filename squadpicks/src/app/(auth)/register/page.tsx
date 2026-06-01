@@ -1,10 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod/v4'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { Turnstile } from '@marsidev/react-turnstile'
+import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { getSupabaseClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -53,29 +56,68 @@ const schema = z.object({
 })
 type Fields = z.infer<typeof schema>
 
-export default function RegisterPage() {
+function RegisterForm() {
+  const searchParams = useSearchParams()
+  const prefillEmail = searchParams.get('email') ?? ''
+  const redirect     = searchParams.get('redirect') ?? ''
   const [serverErr, setServerErr] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const turnstileRef = useRef<TurnstileInstance>(null)
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Fields>({
     resolver: zodResolver(schema),
+    defaultValues: { email: prefillEmail },
   })
 
   const onSubmit = async (data: Fields) => {
     setServerErr('')
+
+    if (!turnstileToken) {
+      setServerErr('Please complete the security check.')
+      return
+    }
+
+    const verifyRes = await fetch('/api/verify-turnstile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: turnstileToken }),
+    })
+    if (!verifyRes.ok) {
+      setServerErr('Security check failed. Please try again.')
+      turnstileRef.current?.reset()
+      setTurnstileToken('')
+      return
+    }
+
     const supabase = getSupabaseClient()
-    const { error } = await supabase.auth.signUp({
+    const { data: result, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
       options: { data: { username: data.username, display_name: data.username } },
     })
     if (error) { setServerErr(error.message); return }
-    window.location.href = '/dashboard'
+    const next = redirect || '/dashboard'
+    if (result.session) {
+      window.location.href = next
+    } else {
+      const params = new URLSearchParams({ email: data.email })
+      if (redirect) params.set('redirect', redirect)
+      window.location.href = `/verify-otp?${params}`
+    }
   }
 
   return (
     <>
       <h1 className="text-xl font-bold text-slate-100 mb-1">Create your account</h1>
       <p className="text-sm text-slate-400 mb-6">Free forever. No credit card needed.</p>
+
+      <GoogleButton />
+
+      <div className="flex items-center gap-3 my-5">
+        <div className="flex-1 h-px bg-slate-700" />
+        <span className="text-xs text-slate-500">or</span>
+        <div className="flex-1 h-px bg-slate-700" />
+      </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <Input
@@ -111,6 +153,14 @@ export default function RegisterPage() {
           {...register('confirm')}
         />
 
+        <Turnstile
+          ref={turnstileRef}
+          siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+          onSuccess={setTurnstileToken}
+          onExpire={() => setTurnstileToken('')}
+          options={{ theme: 'dark' }}
+        />
+
         {serverErr && (
           <p className="text-sm text-red-400 bg-red-950/40 border border-red-800 rounded-lg px-3 py-2">
             {serverErr}
@@ -123,7 +173,11 @@ export default function RegisterPage() {
       </form>
 
       <p className="text-xs text-slate-500 text-center mt-4">
-        By registering you agree this is a free prediction game — no real money involved.
+        By registering you agree to our{' '}
+        <Link href="/terms" className="text-accent hover:text-accent/80">Terms</Link>
+        {' '}and{' '}
+        <Link href="/privacy" className="text-accent hover:text-accent/80">Privacy Policy</Link>.
+        Free prediction game — no real money involved.
       </p>
 
       <p className="text-sm text-slate-400 text-center mt-4">
@@ -133,5 +187,13 @@ export default function RegisterPage() {
         </Link>
       </p>
     </>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="h-96 animate-pulse bg-slate-700 rounded-lg" />}>
+      <RegisterForm />
+    </Suspense>
   )
 }
