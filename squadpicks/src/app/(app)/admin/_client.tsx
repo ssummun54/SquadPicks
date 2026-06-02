@@ -152,7 +152,6 @@ export function SyncButton() {
       try {
         const { synced, results } = await triggerSync()
         setResult(synced > 0 ? `✓ Synced ${synced} match(es)` : 'No new results')
-        console.log(results)
       } catch (err) {
         setResult(err instanceof Error ? err.message : 'Sync failed')
       }

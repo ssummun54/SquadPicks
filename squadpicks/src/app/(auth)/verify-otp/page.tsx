@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, Suspense } from 'react'
+import { useState, useRef, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { getSupabaseClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -59,23 +59,30 @@ function OtpInput({ onComplete }: { onComplete: (code: string) => void }) {
 
 function VerifyOtpContent() {
   const searchParams = useSearchParams()
-  const emailParam   = searchParams.get('email') ?? ''
   const redirectTo   = searchParams.get('redirect') || '/dashboard'
 
+  const [email, setEmail]         = useState('')
   const [status, setStatus]       = useState<'idle' | 'verifying' | 'resending' | 'resent' | 'error'>('idle')
   const [errorMsg, setErrorMsg]   = useState('')
   const [editing, setEditing]     = useState(false)
-  const [draftEmail, setDraftEmail] = useState(emailParam)
+  const [draftEmail, setDraftEmail] = useState('')
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem('otp_email') ?? ''
+    setEmail(stored)
+    setDraftEmail(stored)
+  }, [])
 
   const verify = async (code: string) => {
     setStatus('verifying')
     setErrorMsg('')
     const supabase = getSupabaseClient()
-    const { error } = await supabase.auth.verifyOtp({ email: emailParam, token: code, type: 'signup' })
+    const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'signup' })
     if (error) {
       setErrorMsg(error.message)
       setStatus('error')
     } else {
+      sessionStorage.removeItem('otp_email')
       window.location.href = redirectTo
     }
   }
@@ -84,7 +91,7 @@ function VerifyOtpContent() {
     setStatus('resending')
     setErrorMsg('')
     const supabase = getSupabaseClient()
-    const { error } = await supabase.auth.resend({ type: 'signup', email: emailParam })
+    const { error } = await supabase.auth.resend({ type: 'signup', email })
     if (error) {
       setErrorMsg(error.message)
       setStatus('error')
@@ -95,7 +102,8 @@ function VerifyOtpContent() {
 
   const applyNewEmail = () => {
     const trimmed = draftEmail.trim()
-    if (!trimmed || trimmed === emailParam) { setEditing(false); return }
+    if (!trimmed || trimmed === email) { setEditing(false); return }
+    sessionStorage.setItem('otp_email', trimmed)
     window.location.href = `/register?email=${encodeURIComponent(trimmed)}`
   }
 
@@ -140,8 +148,8 @@ function VerifyOtpContent() {
           <>
             <p className="text-sm text-slate-400 mt-1">
               Enter the 8-character code sent to{' '}
-              <span className="text-slate-200 font-medium">{emailParam || 'your email'}</span>
-              {emailParam && (
+              <span className="text-slate-200 font-medium">{email || 'your email'}</span>
+              {email && (
                 <>
                   {' '}
                   <button

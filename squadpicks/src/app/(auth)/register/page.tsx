@@ -101,9 +101,10 @@ function RegisterForm() {
     if (result.session) {
       window.location.href = next
     } else {
-      const params = new URLSearchParams({ email: data.email })
+      sessionStorage.setItem('otp_email', data.email)
+      const params = new URLSearchParams()
       if (redirect) params.set('redirect', redirect)
-      window.location.href = `/verify-otp?${params}`
+      window.location.href = `/verify-otp${params.toString() ? `?${params}` : ''}`
     }
   }
 

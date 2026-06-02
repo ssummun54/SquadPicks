@@ -106,7 +106,8 @@ function LoginForm() {
             Check your inbox for the confirmation link.
           </p>
           <a
-            href={`/verify-otp?email=${encodeURIComponent(unconfirmedEmail)}`}
+            href="/verify-otp"
+            onClick={() => sessionStorage.setItem('otp_email', unconfirmedEmail)}
             className="text-accent hover:text-accent/80 font-medium underline underline-offset-2"
           >
             Resend confirmation email
