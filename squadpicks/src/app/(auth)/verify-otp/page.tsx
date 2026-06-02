@@ -137,7 +137,7 @@ function VerifyOtpContent() {
               </Button>
               <button
                 type="button"
-                onClick={() => { setEditing(false); setDraftEmail(emailParam) }}
+                onClick={() => { setEditing(false); setDraftEmail(email) }}
                 className="flex-1 text-sm text-slate-400 hover:text-slate-200 border border-slate-600 rounded-lg px-3 py-2 transition-colors"
               >
                 Cancel
