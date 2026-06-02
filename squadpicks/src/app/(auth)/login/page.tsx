@@ -103,15 +103,20 @@ function LoginForm() {
         <div className="text-sm bg-amber-950/40 border border-amber-700 rounded-lg px-3 py-2">
           <p className="text-amber-300 font-medium mb-1">Email not verified</p>
           <p className="text-amber-400/80 mb-2">
-            Check your inbox for the confirmation link.
+            We&apos;ll send a new verification code to your email.
           </p>
-          <a
-            href="/verify-otp"
-            onClick={() => sessionStorage.setItem('otp_email', unconfirmedEmail)}
+          <button
+            type="button"
+            onClick={async () => {
+              const supabase = getSupabaseClient()
+              await supabase.auth.resend({ type: 'signup', email: unconfirmedEmail })
+              sessionStorage.setItem('otp_email', unconfirmedEmail)
+              window.location.href = '/verify-otp'
+            }}
             className="text-accent hover:text-accent/80 font-medium underline underline-offset-2"
           >
-            Resend confirmation email
-          </a>
+            Send verification code
+          </button>
         </div>
       )}
 
