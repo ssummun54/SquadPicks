@@ -7,13 +7,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing token' }, { status: 400 })
   }
 
+  const body = new URLSearchParams({
+    secret:   process.env.TURNSTILE_SECRET_KEY ?? '',
+    response: token,
+  })
+
   const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      secret: process.env.TURNSTILE_SECRET_KEY,
-      response: token,
-    }),
+    body,
   })
 
   const data = await res.json()
