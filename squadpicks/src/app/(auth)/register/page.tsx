@@ -83,7 +83,8 @@ function RegisterForm() {
       body: JSON.stringify({ token: turnstileToken }),
     })
     if (!verifyRes.ok) {
-      setServerErr('Security check failed. Please try again.')
+      const errData = await verifyRes.json().catch(() => ({}))
+      setServerErr(`Security check failed: ${(errData.codes ?? []).join(', ') || 'unknown'}`)
       turnstileRef.current?.reset()
       setTurnstileToken('')
       return
