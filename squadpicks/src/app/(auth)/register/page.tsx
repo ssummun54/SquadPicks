@@ -113,9 +113,11 @@ function RegisterForm() {
       <h1 className="text-xl font-bold text-slate-100 mb-1">Create your account</h1>
       <p className="text-sm text-slate-400 mb-6">Free forever. No credit card needed.</p>
 
-      <GoogleButton />
+      <div className="hidden">
+        <GoogleButton />
+      </div>
 
-      <div className="flex items-center gap-3 my-5">
+      <div className="hidden flex items-center gap-3 my-5">
         <div className="flex-1 h-px bg-slate-700" />
         <span className="text-xs text-slate-500">or</span>
         <div className="flex-1 h-px bg-slate-700" />
