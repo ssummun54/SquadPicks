@@ -9,7 +9,7 @@ export default function TermsPage() {
       <p className="text-sm text-slate-500 mb-10">Last updated June 01, 2026</p>
 
       <p className="mb-6">We are SquadPicks, operated by Sergio M, registered in North Carolina, United States. We operate the website <a href="https://squadpicks.co" className="text-accent hover:underline">squadpicks.co</a>.</p>
-      <p className="mb-6">SquadPicks is a free sports prediction game where users predict match scores, group standings, and knockout bracket results for major tournaments. Users create or join private groups to compete against friends, track standings on a leaderboard, and earn points for correct predictions. <strong className="text-slate-200">No real money is involved.</strong></p>
+      <p className="mb-6">SquadPicks is a free sports prediction game where users predict match scores, group standings, and knockout bracket results for major tournaments. Users create or join private groups to compete against friends, track standings on a leaderboard, and earn points for correct predictions. <strong className="text-slate-200">SquadPicks does not charge fees, award prizes, or process any payments.</strong> Group organizers may optionally display personal payment handles (e.g. Zelle, CashApp) for informal pool collection among their members. Any such transactions occur entirely outside of SquadPicks and are solely the responsibility of the parties involved. SquadPicks is not a party to, and bears no liability for, any money exchanged between users.</p>
       <p className="mb-10">By accessing the Services, you have read, understood, and agreed to be bound by these Terms. If you do not agree, you must discontinue use immediately.</p>
 
       <Section title="1. Our Services">

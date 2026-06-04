@@ -43,13 +43,15 @@ function GoogleButton() {
 }
 
 const schema = z.object({
-  username: z.string()
+  first_name: z.string().min(1, 'Required').max(50, 'Max 50 characters'),
+  last_name:  z.string().min(1, 'Required').max(50, 'Max 50 characters'),
+  username:   z.string()
     .min(3, 'At least 3 characters')
     .max(20, 'Max 20 characters')
     .regex(/^[a-z0-9_]+$/, 'Lowercase letters, numbers, and underscores only'),
-  email:    z.email('Enter a valid email'),
-  password: z.string().min(8, 'At least 8 characters'),
-  confirm:  z.string(),
+  email:      z.email('Enter a valid email'),
+  password:   z.string().min(8, 'At least 8 characters'),
+  confirm:    z.string(),
 }).refine(d => d.password === d.confirm, {
   message: 'Passwords do not match',
   path: ['confirm'],
@@ -94,7 +96,7 @@ function RegisterForm() {
     const { data: result, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
-      options: { data: { username: data.username, display_name: data.username } },
+      options: { data: { username: data.username, display_name: data.username, first_name: data.first_name, last_name: data.last_name } },
     })
     if (error) { setServerErr(error.message); return }
     const next = redirect || '/dashboard'
@@ -124,6 +126,22 @@ function RegisterForm() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            label="First name"
+            id="first_name"
+            autoComplete="given-name"
+            error={errors.first_name?.message}
+            {...register('first_name')}
+          />
+          <Input
+            label="Last name"
+            id="last_name"
+            autoComplete="family-name"
+            error={errors.last_name?.message}
+            {...register('last_name')}
+          />
+        </div>
         <Input
           label="Username"
           id="username"

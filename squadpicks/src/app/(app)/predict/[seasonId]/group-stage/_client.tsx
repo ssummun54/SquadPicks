@@ -203,9 +203,27 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
     return acc
   }, {})
 
+  const resetMatch = useCallback(async (matchId: string) => {
+    let userId = userIdRef.current
+    if (!userId) {
+      const { data } = await getSupabaseClient().auth.getUser()
+      userId = data.user?.id ?? null
+      userIdRef.current = userId
+    }
+    if (!userId) return
+    await getSupabaseClient().from('match_predictions')
+      .delete()
+      .eq('user_id', userId)
+      .eq('match_id', matchId)
+      .eq('pick_group_id', pickGroupId)
+    setMatchPreds(s => ({ ...s, [matchId]: { home: '', away: '' } }))
+    setMatchSubmitted(s => ({ ...s, [matchId]: false }))
+    setMatchSaved(s => { const n = { ...s }; delete n[matchId]; return n })
+  }, [pickGroupId])
+
   const saveMatch = useCallback(async (matchId: string, home: string, away: string) => {
     if (home === '' || away === '') {
-      setMatchSaved(s => ({ ...s, [matchId]: 'error' }))
+      await resetMatch(matchId)
       return
     }
     let userId = userIdRef.current
@@ -511,7 +529,7 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
                                         <span className="text-sm font-medium text-slate-200 truncate">{match.away_team?.short_name ?? match.away_team?.name ?? 'TBD'}</span>
                                       </span>
                                       {predictionsAllowed && (
-                                        <div className="flex items-center gap-1 shrink-0">
+                                        <div className="flex items-center gap-1.5 shrink-0">
                                           <button
                                             type="button"
                                             disabled={!submitted || matchSaved[match.id] === 'saving'}

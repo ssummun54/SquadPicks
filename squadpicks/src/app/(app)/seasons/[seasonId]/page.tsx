@@ -103,9 +103,10 @@ export default function SeasonPage({ params }: { params: Promise<{ seasonId: str
   const predictHref = (groupId: string) => {
     if (!season) return '#'
     const rounds = season.rounds ?? []
+    const hasSeries   = rounds.some(r => r.slug === 'series')
     const hasFinalOnly = rounds.every(r => r.slug === 'final')
-    const hasGroups = rounds.some(r => r.slug === 'group_stage')
-    const path = hasFinalOnly ? 'final' : hasGroups ? 'group-stage' : 'knockout'
+    const hasGroups   = rounds.some(r => r.slug === 'group_stage')
+    const path = hasSeries ? 'series' : hasFinalOnly ? 'final' : hasGroups ? 'group-stage' : 'knockout'
     return `/predict/${seasonId}/${path}?from=${groupId}`
   }
 

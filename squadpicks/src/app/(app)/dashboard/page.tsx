@@ -79,7 +79,7 @@ const myGroups = (groupsResult.data ?? []).map((m: any) => m.pick_groups).filter
               <div className="text-sm text-slate-400">Create a group and invite your squad with a code.</div>
             </div>
             <Link href="/groups/new" className="shrink-0 px-5 py-2.5 rounded-lg bg-brand text-white font-semibold text-sm hover:bg-brand-dark transition-colors">
-              Create group
+              Join or create a group
             </Link>
           </div>
         ) : (
@@ -115,15 +115,28 @@ function PlaylistLinks({ season }: { season: { id: string; rounds: Round[] } }) 
   const rounds: Round[] = season.rounds ?? []
 
   const groupOpen    = rounds.some(r => r.slug === 'group_stage' && r.prediction_window === 'open')
-  const knockoutOpen = rounds.some(r => r.type === 'knockout' && r.slug !== 'final' && r.prediction_window === 'open')
+  const seriesOpen   = rounds.some(r => r.slug === 'series'      && r.prediction_window === 'open')
+  const knockoutOpen = rounds.some(r => r.type === 'knockout' && r.slug !== 'final' && r.slug !== 'series' && r.prediction_window === 'open')
   const finalOpen    = rounds.some(r => r.slug === 'final' && r.prediction_window === 'open')
 
-  if (!groupOpen && !knockoutOpen && !finalOpen) {
+  if (!groupOpen && !seriesOpen && !knockoutOpen && !finalOpen) {
     return <div className="text-sm text-slate-500 text-center py-2">Predictions opening soon.</div>
   }
 
   return (
     <div className="flex flex-col gap-2">
+      {seriesOpen && (
+        <Link
+          href={`/predict/${season.id}/series`}
+          className="flex items-center justify-between px-4 py-3 rounded-lg bg-slate-900/80 border border-slate-600 hover:border-accent hover:bg-accent/5 transition-all group"
+        >
+          <div>
+            <div className="font-semibold text-slate-200 group-hover:text-accent transition-colors">NBA Finals Series</div>
+            <div className="text-xs text-slate-400">Pick game scores, series champion + in how many games</div>
+          </div>
+          <span className="text-slate-500 group-hover:text-accent transition-colors text-lg">→</span>
+        </Link>
+      )}
       {groupOpen && (
         <Link
           href={`/predict/${season.id}/group-stage`}

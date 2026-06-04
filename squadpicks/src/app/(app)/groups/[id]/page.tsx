@@ -12,28 +12,27 @@ export default async function GroupPage({ params }: Props) {
   const supabase = await getSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [groupRes, membersRes, groupSeasonsRes, availableSeasonsRes] = await Promise.all([
-    supabase.from('pick_groups').select('id, name, invite_code, created_by').eq('id', id).single(),
+  const [groupRes, membersRes, groupSeasonsRes, availableSeasonsRes, enrollmentsRes] = await Promise.all([
+    supabase.from('pick_groups').select('id, name, invite_code, created_by, zelle_info, cashapp_info').eq('id', id).single(),
     supabase.from('pick_group_members').select('user_id, role, profiles(username, display_name)').eq('pick_group_id', id),
     supabase
       .from('pick_group_seasons')
       .select('season_id, seasons(id, name, status, competitions(name), rounds(slug, type, prediction_window))')
       .eq('pick_group_id', id)
       .order('joined_at', { ascending: true }),
-    // Seasons this group has NOT joined yet (for the "Join new event" button)
     supabase.from('seasons').select('id, name, status, competitions(name), rounds(slug, type, prediction_window)').neq('status', 'completed'),
+    supabase.from('event_enrollments' as any).select('id, user_id, season_id, status, profiles(username, display_name, first_name, last_name)').eq('pick_group_id', id),
   ])
 
   if (!groupRes.data) notFound()
 
-  const group   = groupRes.data as any
-  const members = (membersRes.data ?? []) as any[]
-  const joinedSeasons = (groupSeasonsRes.data ?? []).map((r: any) => r.seasons).filter(Boolean) as any[]
+  const group          = groupRes.data as any
+  const members        = (membersRes.data ?? []) as any[]
+  const joinedSeasons  = (groupSeasonsRes.data ?? []).map((r: any) => r.seasons).filter(Boolean) as any[]
   const joinedSeasonIds = new Set(joinedSeasons.map((s: any) => s.id))
   const availableSeasons = (availableSeasonsRes.data ?? []).filter((s: any) => !joinedSeasonIds.has(s.id)) as any[]
+  const enrollments    = (enrollmentsRes.data ?? []) as any[]
 
-  // Per-season leaderboard filtered to group members
-  const memberIds = members.map(m => m.user_id)
   const seasonLeaderboards: Record<string, any[]> = {}
   for (const season of joinedSeasons) {
     const { data } = await supabase
@@ -54,6 +53,7 @@ export default async function GroupPage({ params }: Props) {
       seasons={joinedSeasons}
       availableSeasons={availableSeasons}
       seasonLeaderboards={seasonLeaderboards}
+      enrollments={enrollments}
       currentUserId={user?.id ?? null}
       isAdmin={isAdmin}
     />

@@ -84,14 +84,21 @@ function LoginForm() {
         error={errors.email?.message}
         {...register('email')}
       />
-      <Input
-        label="Password"
-        id="password"
-        type="password"
-        autoComplete="current-password"
-        error={errors.password?.message}
-        {...register('password')}
-      />
+      <div className="flex flex-col gap-1.5">
+        <Input
+          label="Password"
+          id="password"
+          type="password"
+          autoComplete="current-password"
+          error={errors.password?.message}
+          {...register('password')}
+        />
+        <div className="flex justify-end">
+          <Link href="/forgot-password" className="text-xs text-slate-500 hover:text-accent transition-colors">
+            Forgot password?
+          </Link>
+        </div>
+      </div>
 
       {serverErr && (
         <p className="text-sm text-red-400 bg-red-950/40 border border-red-800 rounded-lg px-3 py-2">
