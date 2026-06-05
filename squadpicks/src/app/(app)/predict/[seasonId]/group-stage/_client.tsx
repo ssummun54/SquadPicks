@@ -97,7 +97,7 @@ function groupMatchesByDay(matches: Match[]): { date: Date; matches: Match[] }[]
 
 function PencilIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
     </svg>
   )
@@ -105,7 +105,7 @@ function PencilIcon() {
 
 function CheckIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M20 6 9 17l-5-5" />
     </svg>
   )
@@ -392,7 +392,7 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
                                 type="button"
                                 disabled={!standingsSubmitted}
                                 onClick={() => unlockStandings(group.id)}
-                                className={`w-8 h-8 rounded-md border flex items-center justify-center transition-colors ${
+                                className={`w-10 h-10 rounded-md border flex items-center justify-center transition-colors ${
                                   !standingsSubmitted ? 'border-accent/50 bg-accent/10 text-accent' : 'border-slate-500 bg-slate-800 text-slate-300 hover:border-accent/50 hover:text-accent'
                                 } disabled:cursor-default`}
                                 title="Edit standings"
@@ -403,7 +403,7 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
                                 type="button"
                                 disabled={standingsSubmitted || standingSaved[group.id] === 'saving'}
                                 onClick={() => saveStandings(group.id, order)}
-                                className={`w-8 h-8 rounded-md border flex items-center justify-center transition-colors ${
+                                className={`w-10 h-10 rounded-md border flex items-center justify-center transition-colors ${
                                   standingsSubmitted ? 'border-accent/50 bg-accent/10 text-accent' : 'border-slate-700 bg-slate-800 text-slate-300 hover:text-accent hover:border-accent/50'
                                 } disabled:cursor-default`}
                                 title="Save standings"
@@ -471,7 +471,7 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
                                 const time   = format(new Date(match.kickoff_at), 'HH:mm')
 
                                 return (
-                                  <div key={match.id} className={`rounded-lg px-3 sm:px-4 py-3 min-w-0 ${locked ? 'bg-slate-900/40' : 'bg-slate-900/70'}`}>
+                                  <div key={match.id} className={`rounded-lg pl-3 pr-4 sm:px-4 py-3 min-w-0 ${locked ? 'bg-slate-900/40' : 'bg-slate-900/70'}`}>
                                     <div className="text-xs text-slate-500 mb-2.5 flex items-center gap-2 min-w-0">
                                       <span>{time}</span>
                                       {predictionsAllowed && (
@@ -492,12 +492,12 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
                                         {matchSaved[match.id] === 'error'  && <span className="text-red-400">Error</span>}
                                       </span>
                                     </div>
-                                    <div className={`grid items-center gap-2 sm:gap-3 min-w-0 ${
+                                    <div className={`grid items-center gap-1 sm:gap-3 ${
                                       predictionsAllowed
-                                        ? 'grid-cols-[minmax(0,1fr)_3rem_auto_3rem_minmax(0,1fr)_2.25rem] sm:grid-cols-[minmax(0,1fr)_3.5rem_auto_3.5rem_minmax(0,1fr)_2.25rem]'
-                                        : 'grid-cols-[minmax(0,1fr)_3rem_auto_3rem_minmax(0,1fr)] sm:grid-cols-[minmax(0,1fr)_3.5rem_auto_3.5rem_minmax(0,1fr)]'
+                                        ? 'grid-cols-[minmax(0,1fr)_2.5rem_auto_2.5rem_minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,1fr)_3.5rem_auto_3.5rem_minmax(0,1fr)_auto]'
+                                        : 'grid-cols-[minmax(0,1fr)_2.5rem_auto_2.5rem_minmax(0,1fr)] sm:grid-cols-[minmax(0,1fr)_3.5rem_auto_3.5rem_minmax(0,1fr)]'
                                     }`}>
-                                      <span className="min-w-0 flex-[1_1_0] flex items-center justify-end gap-1.5 sm:gap-2">
+                                      <span className="min-w-0 flex items-center justify-end gap-1 sm:gap-2">
                                         <span className="text-sm font-medium text-slate-200 truncate">{match.home_team?.short_name ?? match.home_team?.name ?? 'TBD'}</span>
                                         {match.home_team?.logo_url && <Image src={match.home_team.logo_url} alt="" width={20} height={20} className="object-contain shrink-0" />}
                                       </span>
@@ -505,7 +505,7 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
                                         disabled={!editable}
                                         value={pred.home}
                                         onChange={e => setScore(match.id, 'home', e.target.value)}
-                                        className="w-12 sm:w-14 h-9 text-center rounded-md bg-slate-700 border border-slate-600 text-slate-100 text-sm focus:outline-none focus:border-accent disabled:opacity-40 transition-colors cursor-pointer shrink-0"
+                                        className="w-10 sm:w-14 h-9 appearance-none text-center rounded-md bg-slate-700 border border-slate-600 text-slate-100 text-sm focus:outline-none focus:border-accent disabled:opacity-40 transition-colors cursor-pointer shrink-0"
                                       >
                                         <option value="">–</option>
                                         {Array.from({ length: 11 }, (_, i) => (
@@ -517,14 +517,14 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
                                         disabled={!editable}
                                         value={pred.away}
                                         onChange={e => setScore(match.id, 'away', e.target.value)}
-                                        className="w-12 sm:w-14 h-9 text-center rounded-md bg-slate-700 border border-slate-600 text-slate-100 text-sm focus:outline-none focus:border-accent disabled:opacity-40 transition-colors cursor-pointer shrink-0"
+                                        className="w-10 sm:w-14 h-9 appearance-none text-center rounded-md bg-slate-700 border border-slate-600 text-slate-100 text-sm focus:outline-none focus:border-accent disabled:opacity-40 transition-colors cursor-pointer shrink-0"
                                       >
                                         <option value="">–</option>
                                         {Array.from({ length: 11 }, (_, i) => (
                                           <option key={i} value={i}>{i}</option>
                                         ))}
                                       </select>
-                                      <span className="min-w-0 flex-[1_1_0] flex items-center gap-1.5 sm:gap-2">
+                                      <span className="min-w-0 flex items-center gap-1 sm:gap-2">
                                         {match.away_team?.logo_url && <Image src={match.away_team.logo_url} alt="" width={20} height={20} className="object-contain shrink-0" />}
                                         <span className="text-sm font-medium text-slate-200 truncate">{match.away_team?.short_name ?? match.away_team?.name ?? 'TBD'}</span>
                                       </span>
@@ -534,7 +534,7 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
                                             type="button"
                                             disabled={!submitted || matchSaved[match.id] === 'saving'}
                                             onClick={() => unlockMatch(match.id)}
-                                            className={`w-8 h-8 rounded-md border flex items-center justify-center transition-colors ${
+                                            className={`w-8 h-8 sm:w-10 sm:h-10 rounded-md border flex items-center justify-center transition-colors ${
                                               !submitted ? 'border-accent/50 bg-accent/10 text-accent' : 'border-slate-500 bg-slate-800 text-slate-300 hover:border-accent/50 hover:text-accent'
                                             } disabled:cursor-default`}
                                             title="Edit prediction"
@@ -545,7 +545,7 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
                                             type="button"
                                             disabled={submitted || !canSubmit || matchSaved[match.id] === 'saving'}
                                             onClick={() => saveMatch(match.id, pred.home, pred.away)}
-                                            className={`w-8 h-8 rounded-md border flex items-center justify-center transition-colors ${
+                                            className={`w-8 h-8 sm:w-10 sm:h-10 rounded-md border flex items-center justify-center transition-colors ${
                                               submitted ? 'border-accent/50 bg-accent/10 text-accent' : canSubmit ? 'border-slate-700 bg-slate-800 text-slate-300 hover:text-accent hover:border-accent/50' : 'border-slate-700 bg-slate-800 text-slate-600'
                                             } disabled:cursor-default`}
                                             title="Save prediction"

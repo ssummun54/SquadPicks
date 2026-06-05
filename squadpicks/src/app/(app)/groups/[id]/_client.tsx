@@ -498,7 +498,7 @@ export function GroupPageClient({
                             <div className="text-xs text-slate-500">@{row.username}</div>
                           </td>
                           <td className="px-4 py-3 text-right font-black text-base">
-                            {row.total_points !== null
+                            {row.total_points
                               ? <span className="text-accent">{row.total_points}</span>
                               : <span className="text-slate-600">—</span>}
                           </td>

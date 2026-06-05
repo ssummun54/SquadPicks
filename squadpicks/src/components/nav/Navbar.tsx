@@ -9,7 +9,8 @@ import type { Profile } from '@/types/database'
 export function Navbar({ profile }: { profile: Profile | null }) {
   const pathname = usePathname()
   const router   = useRouter()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen]           = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const signOut = async () => {
@@ -30,6 +31,9 @@ export function Navbar({ profile }: { profile: Profile | null }) {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  // Close mobile menu on route change
+  useEffect(() => { setMobileOpen(false) }, [pathname])
+
   return (
     <header className="sticky top-0 z-40 border-b border-slate-700 bg-slate-900/90 backdrop-blur">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
@@ -38,7 +42,7 @@ export function Navbar({ profile }: { profile: Profile | null }) {
           SquadPicks
         </Link>
 
-        {/* Nav links */}
+        {/* Nav links — desktop */}
         <nav className="hidden sm:flex items-center gap-1 text-sm">
           <NavLink href="/dashboard"   label="Home"         active={pathname === '/dashboard'} />
           <NavLink href="/seasons"     label="Events"       active={pathname.startsWith('/seasons')} />
@@ -48,6 +52,17 @@ export function Navbar({ profile }: { profile: Profile | null }) {
 
         {/* Right */}
         <div className="flex items-center gap-3">
+          {/* Hamburger — mobile only */}
+          <button
+            onClick={() => setMobileOpen(v => !v)}
+            className="sm:hidden flex flex-col justify-center gap-1.5 w-8 h-8 text-slate-400 hover:text-slate-100 transition-colors"
+            aria-label="Toggle menu"
+          >
+            <span className={`block h-0.5 bg-current transition-transform origin-center ${mobileOpen ? 'rotate-45 translate-y-2' : ''}`} />
+            <span className={`block h-0.5 bg-current transition-opacity ${mobileOpen ? 'opacity-0' : ''}`} />
+            <span className={`block h-0.5 bg-current transition-transform origin-center ${mobileOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+          </button>
+
           {profile ? (
             <div className="relative" ref={dropdownRef}>
               <button
@@ -95,6 +110,16 @@ export function Navbar({ profile }: { profile: Profile | null }) {
           )}
         </div>
       </div>
+
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <nav className="sm:hidden border-t border-slate-700 bg-slate-900 px-4 py-3 flex flex-col gap-1 text-sm">
+          <MobileNavLink href="/dashboard"   label="Home"        active={pathname === '/dashboard'}            onClick={() => setMobileOpen(false)} />
+          <MobileNavLink href="/seasons"     label="Events"      active={pathname.startsWith('/seasons')}      onClick={() => setMobileOpen(false)} />
+          <MobileNavLink href="/leaderboard" label="Leaderboard" active={pathname.startsWith('/leaderboard')}  onClick={() => setMobileOpen(false)} />
+          <MobileNavLink href="/groups"      label="My Groups"   active={pathname.startsWith('/groups')}       onClick={() => setMobileOpen(false)} />
+        </nav>
+      )}
     </header>
   )
 }
@@ -107,6 +132,22 @@ function NavLink({ href, label, active }: { href: string; label: string; active:
         active
           ? 'bg-brand/10 text-brand font-medium'
           : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
+      }`}
+    >
+      {label}
+    </Link>
+  )
+}
+
+function MobileNavLink({ href, label, active, onClick }: { href: string; label: string; active: boolean; onClick: () => void }) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={`px-3 py-3 rounded-lg transition-colors text-base ${
+        active
+          ? 'bg-brand/10 text-brand font-medium'
+          : 'text-slate-300 hover:text-slate-100 hover:bg-slate-800'
       }`}
     >
       {label}
