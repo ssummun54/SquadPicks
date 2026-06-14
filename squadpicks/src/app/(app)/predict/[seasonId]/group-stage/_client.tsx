@@ -177,6 +177,24 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
     })
     return submitted
   })
+  const [viewMode, setViewMode] = useState<'group' | 'date'>(() =>
+    (typeof window !== 'undefined' && localStorage.getItem('predict-view-mode') as 'group' | 'date') || 'group'
+  )
+  const changeViewMode = (mode: 'group' | 'date') => {
+    setViewMode(mode)
+    localStorage.setItem('predict-view-mode', mode)
+  }
+  const [dateCollapsed, setDateCollapsed] = useState<Record<string, boolean>>(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const state: Record<string, boolean> = {}
+    groupMatchesByDay(matches).forEach(({ date }) => {
+      const dayStart = new Date(date)
+      dayStart.setHours(0, 0, 0, 0)
+      state[date.toISOString()] = dayStart < today
+    })
+    return state
+  })
   const [collapsed,    setCollapsed]    = useState<Record<string, boolean>>({})
   const [sectionCollapsed, setSectionCollapsed] = useState<Record<string, boolean>>(initSectionCollapsed)
   const [matchSaved,   setMatchSaved]   = useState<Record<string, 'saving'|'saved'|'error'>>({})
@@ -190,6 +208,14 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
       userIdRef.current = data.user?.id ?? null
     })
   }, [])
+
+  useEffect(() => {
+    if (viewMode === 'date') {
+      setTimeout(() => {
+        document.getElementById('date-view-today')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 50)
+    }
+  }, [viewMode])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -320,21 +346,178 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
     return <p className="text-slate-400 text-sm">No group stage data yet — check back once teams are seeded.</p>
   }
 
+  const now = new Date()
+  const tournamentFirstKickoff = matches.reduce<Date | null>((earliest, match) => {
+    const kickoff = new Date(match.kickoff_at)
+    return !earliest || kickoff < earliest ? kickoff : earliest
+  }, null)
+
+  const groupById = Object.fromEntries(groups.map(g => [g.id, g]))
+
+  const renderMatchCard = (match: Match, groupLabel?: string) => {
+    const pred   = matchPreds[match.id] ?? { home: '', away: '' }
+    const locked = new Date(match.kickoff_at) <= now
+    const submitted = !!matchSubmitted[match.id]
+    const predictionsAllowed = predictionsOpen && !locked
+    const editable = predictionsAllowed && !submitted
+    const canSubmit = pred.home !== '' && pred.away !== ''
+    const time = format(new Date(match.kickoff_at), 'HH:mm')
+
+    return (
+      <div key={match.id} className={`rounded-lg pl-3 pr-4 sm:px-4 py-3 min-w-0 ${locked ? 'bg-slate-900/40' : 'bg-slate-900/70'}`}>
+        <div className="text-xs text-slate-500 mb-2.5 flex items-center gap-2 min-w-0">
+          <span>{time}</span>
+          {groupLabel && <span className="text-slate-600 font-medium">{groupLabel}</span>}
+          {predictionsAllowed && (
+            <span className="flex items-center gap-1 text-slate-500" title="Locks at kickoff">
+              <LockIcon open />
+            </span>
+          )}
+          {locked && (
+            <span className="flex items-center gap-1 text-yellow-600">
+              <LockIcon /> Locked
+            </span>
+          )}
+          {match.status === 'completed' && match.home_score !== null && (
+            <span className="text-accent">Result: {match.home_score}–{match.away_score}</span>
+          )}
+          <span className="ml-auto text-xs shrink-0">
+            {matchSaved[match.id] === 'saving' && <span className="text-slate-500">Saving…</span>}
+            {matchSaved[match.id] === 'error'  && <span className="text-red-400">Error</span>}
+          </span>
+        </div>
+        <div className={`grid items-center gap-1 sm:gap-3 ${
+          predictionsAllowed
+            ? 'grid-cols-[minmax(0,1fr)_2.5rem_auto_2.5rem_minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,1fr)_3.5rem_auto_3.5rem_minmax(0,1fr)_auto]'
+            : 'grid-cols-[minmax(0,1fr)_2.5rem_auto_2.5rem_minmax(0,1fr)] sm:grid-cols-[minmax(0,1fr)_3.5rem_auto_3.5rem_minmax(0,1fr)]'
+        }`}>
+          <span className="min-w-0 flex items-center justify-end gap-1 sm:gap-2">
+            <span className="text-sm font-medium text-slate-200 truncate">{match.home_team?.short_name ?? match.home_team?.name ?? 'TBD'}</span>
+            {match.home_team?.logo_url && <Image src={match.home_team.logo_url} alt="" width={20} height={20} className="object-contain shrink-0" />}
+          </span>
+          <select
+            disabled={!editable}
+            value={pred.home}
+            onChange={e => setScore(match.id, 'home', e.target.value)}
+            className="w-10 sm:w-14 h-9 appearance-none text-center rounded-md bg-slate-700 border border-slate-600 text-slate-100 text-sm focus:outline-none focus:border-accent disabled:opacity-40 transition-colors cursor-pointer shrink-0"
+          >
+            <option value="">–</option>
+            {Array.from({ length: 11 }, (_, i) => <option key={i} value={i}>{i}</option>)}
+          </select>
+          <span className="text-slate-500 font-bold text-sm">:</span>
+          <select
+            disabled={!editable}
+            value={pred.away}
+            onChange={e => setScore(match.id, 'away', e.target.value)}
+            className="w-10 sm:w-14 h-9 appearance-none text-center rounded-md bg-slate-700 border border-slate-600 text-slate-100 text-sm focus:outline-none focus:border-accent disabled:opacity-40 transition-colors cursor-pointer shrink-0"
+          >
+            <option value="">–</option>
+            {Array.from({ length: 11 }, (_, i) => <option key={i} value={i}>{i}</option>)}
+          </select>
+          <span className="min-w-0 flex items-center gap-1 sm:gap-2">
+            {match.away_team?.logo_url && <Image src={match.away_team.logo_url} alt="" width={20} height={20} className="object-contain shrink-0" />}
+            <span className="text-sm font-medium text-slate-200 truncate">{match.away_team?.short_name ?? match.away_team?.name ?? 'TBD'}</span>
+          </span>
+          {predictionsAllowed && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                disabled={!submitted || matchSaved[match.id] === 'saving'}
+                onClick={() => unlockMatch(match.id)}
+                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-md border flex items-center justify-center transition-colors ${
+                  !submitted ? 'border-accent/50 bg-accent/10 text-accent' : 'border-slate-500 bg-slate-800 text-slate-300 hover:border-accent/50 hover:text-accent'
+                } disabled:cursor-default`}
+                title="Edit prediction"
+              >
+                <PencilIcon />
+              </button>
+              <button
+                type="button"
+                disabled={submitted || !canSubmit || matchSaved[match.id] === 'saving'}
+                onClick={() => saveMatch(match.id, pred.home, pred.away)}
+                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-md border flex items-center justify-center transition-colors ${
+                  submitted ? 'border-accent/50 bg-accent/10 text-accent' : canSubmit ? 'border-slate-700 bg-slate-800 text-slate-300 hover:text-accent hover:border-accent/50' : 'border-slate-700 bg-slate-800 text-slate-600'
+                } disabled:cursor-default`}
+                title="Save prediction"
+              >
+                <CheckIcon />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  const allDays = groupMatchesByDay(matches)
+
   return (
     <div className="flex flex-col gap-4">
-      {groups.map(group => {
+      {/* View toggle */}
+      <div className="flex gap-1 p-1 bg-slate-800/60 rounded-lg w-fit">
+        <button
+          onClick={() => changeViewMode('group')}
+          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            viewMode === 'group' ? 'bg-slate-700 text-slate-100' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          By Group
+        </button>
+        <button
+          onClick={() => changeViewMode('date')}
+          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            viewMode === 'date' ? 'bg-slate-700 text-slate-100' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          By Date
+        </button>
+      </div>
+
+      {/* Date view */}
+      {viewMode === 'date' && (
+        <div className="flex flex-col gap-4">
+          {allDays.map(({ date, matches: dayMatches }) => {
+            const key = date.toISOString()
+            const collapsed = dateCollapsed[key] ?? false
+            const todayStart = new Date(); todayStart.setHours(0,0,0,0)
+            const dayStart = new Date(date); dayStart.setHours(0,0,0,0)
+            const isToday = dayStart.getTime() === todayStart.getTime()
+            return (
+              <div key={key} id={isToday ? 'date-view-today' : undefined} className="rounded-xl border border-slate-700 bg-slate-800/60 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setDateCollapsed(s => ({ ...s, [key]: !collapsed }))}
+                  className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-700/30 transition-colors"
+                >
+                  <span className="font-black text-slate-100 text-lg">{format(date, 'EEE, MMM d')}</span>
+                  <span className="flex items-center gap-3 text-xs text-slate-500 shrink-0">
+                    <span>{dayMatches.length} match{dayMatches.length === 1 ? '' : 'es'}</span>
+                    <span className="text-slate-400 text-xl font-light leading-none">{collapsed ? '+' : '−'}</span>
+                  </span>
+                </button>
+                {!collapsed && (
+                  <div className="p-2 sm:p-3 flex flex-col gap-2 border-t border-slate-700">
+                    {dayMatches.map(match => {
+                      const group = match.group_id ? groupById[match.group_id] : null
+                      return renderMatchCard(match, group?.name)
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Group view */}
+      {viewMode === 'group' && groups.map(group => {
         const isCollapsed = !!collapsed[group.id]
         const gMatches    = matchesByGroup[group.id] ?? []
         const days        = groupMatchesByDay(gMatches)
         const order       = groupOrder[group.id] ?? group.group_teams.map(gt => gt.team_id)
         const teamMap     = Object.fromEntries(group.group_teams.map(gt => [gt.team_id, gt.teams]))
-        const now         = new Date()
-        const firstKickoff = gMatches.reduce<Date | null>((earliest, match) => {
-          const kickoff = new Date(match.kickoff_at)
-          return !earliest || kickoff < earliest ? kickoff : earliest
-        }, null)
         const allLocked   = !predictionsOpen || (gMatches.length > 0 && gMatches.every(m => new Date(m.kickoff_at) <= now))
-        const standingsAllowed = predictionsOpen && !!firstKickoff && firstKickoff > now
+        const standingsAllowed = predictionsOpen && !!tournamentFirstKickoff && tournamentFirstKickoff > now
         const standingsSubmitted = !!groupSubmitted[group.id]
         const standingsEditable = standingsAllowed && !standingsSubmitted
         const standingsSectionKey = `${group.id}:standings`
@@ -461,103 +644,7 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
 
                           {!dayCollapsed && (
                             <div className="p-2 sm:p-3 flex flex-col gap-2 border-t border-slate-700">
-                              {dayMatches.map(match => {
-                                const pred   = matchPreds[match.id] ?? { home: '', away: '' }
-                                const locked = new Date(match.kickoff_at) <= now
-                                const submitted = !!matchSubmitted[match.id]
-                                const predictionsAllowed = predictionsOpen && !locked
-                                const editable = predictionsAllowed && !submitted
-                                const canSubmit = pred.home !== '' && pred.away !== ''
-                                const time   = format(new Date(match.kickoff_at), 'HH:mm')
-
-                                return (
-                                  <div key={match.id} className={`rounded-lg pl-3 pr-4 sm:px-4 py-3 min-w-0 ${locked ? 'bg-slate-900/40' : 'bg-slate-900/70'}`}>
-                                    <div className="text-xs text-slate-500 mb-2.5 flex items-center gap-2 min-w-0">
-                                      <span>{time}</span>
-                                      {predictionsAllowed && (
-                                        <span className="flex items-center gap-1 text-slate-500" title="Locks at kickoff">
-                                          <LockIcon open />
-                                        </span>
-                                      )}
-                                      {locked && (
-                                        <span className="flex items-center gap-1 text-yellow-600">
-                                          <LockIcon /> Locked
-                                        </span>
-                                      )}
-                                      {match.status === 'completed' && match.home_score !== null && (
-                                        <span className="text-accent">Result: {match.home_score}–{match.away_score}</span>
-                                      )}
-                                      <span className="ml-auto text-xs shrink-0">
-                                        {matchSaved[match.id] === 'saving' && <span className="text-slate-500">Saving…</span>}
-                                        {matchSaved[match.id] === 'error'  && <span className="text-red-400">Error</span>}
-                                      </span>
-                                    </div>
-                                    <div className={`grid items-center gap-1 sm:gap-3 ${
-                                      predictionsAllowed
-                                        ? 'grid-cols-[minmax(0,1fr)_2.5rem_auto_2.5rem_minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,1fr)_3.5rem_auto_3.5rem_minmax(0,1fr)_auto]'
-                                        : 'grid-cols-[minmax(0,1fr)_2.5rem_auto_2.5rem_minmax(0,1fr)] sm:grid-cols-[minmax(0,1fr)_3.5rem_auto_3.5rem_minmax(0,1fr)]'
-                                    }`}>
-                                      <span className="min-w-0 flex items-center justify-end gap-1 sm:gap-2">
-                                        <span className="text-sm font-medium text-slate-200 truncate">{match.home_team?.short_name ?? match.home_team?.name ?? 'TBD'}</span>
-                                        {match.home_team?.logo_url && <Image src={match.home_team.logo_url} alt="" width={20} height={20} className="object-contain shrink-0" />}
-                                      </span>
-                                      <select
-                                        disabled={!editable}
-                                        value={pred.home}
-                                        onChange={e => setScore(match.id, 'home', e.target.value)}
-                                        className="w-10 sm:w-14 h-9 appearance-none text-center rounded-md bg-slate-700 border border-slate-600 text-slate-100 text-sm focus:outline-none focus:border-accent disabled:opacity-40 transition-colors cursor-pointer shrink-0"
-                                      >
-                                        <option value="">–</option>
-                                        {Array.from({ length: 11 }, (_, i) => (
-                                          <option key={i} value={i}>{i}</option>
-                                        ))}
-                                      </select>
-                                      <span className="text-slate-500 font-bold text-sm">:</span>
-                                      <select
-                                        disabled={!editable}
-                                        value={pred.away}
-                                        onChange={e => setScore(match.id, 'away', e.target.value)}
-                                        className="w-10 sm:w-14 h-9 appearance-none text-center rounded-md bg-slate-700 border border-slate-600 text-slate-100 text-sm focus:outline-none focus:border-accent disabled:opacity-40 transition-colors cursor-pointer shrink-0"
-                                      >
-                                        <option value="">–</option>
-                                        {Array.from({ length: 11 }, (_, i) => (
-                                          <option key={i} value={i}>{i}</option>
-                                        ))}
-                                      </select>
-                                      <span className="min-w-0 flex items-center gap-1 sm:gap-2">
-                                        {match.away_team?.logo_url && <Image src={match.away_team.logo_url} alt="" width={20} height={20} className="object-contain shrink-0" />}
-                                        <span className="text-sm font-medium text-slate-200 truncate">{match.away_team?.short_name ?? match.away_team?.name ?? 'TBD'}</span>
-                                      </span>
-                                      {predictionsAllowed && (
-                                        <div className="flex items-center gap-1.5 shrink-0">
-                                          <button
-                                            type="button"
-                                            disabled={!submitted || matchSaved[match.id] === 'saving'}
-                                            onClick={() => unlockMatch(match.id)}
-                                            className={`w-8 h-8 sm:w-10 sm:h-10 rounded-md border flex items-center justify-center transition-colors ${
-                                              !submitted ? 'border-accent/50 bg-accent/10 text-accent' : 'border-slate-500 bg-slate-800 text-slate-300 hover:border-accent/50 hover:text-accent'
-                                            } disabled:cursor-default`}
-                                            title="Edit prediction"
-                                          >
-                                            <PencilIcon />
-                                          </button>
-                                          <button
-                                            type="button"
-                                            disabled={submitted || !canSubmit || matchSaved[match.id] === 'saving'}
-                                            onClick={() => saveMatch(match.id, pred.home, pred.away)}
-                                            className={`w-8 h-8 sm:w-10 sm:h-10 rounded-md border flex items-center justify-center transition-colors ${
-                                              submitted ? 'border-accent/50 bg-accent/10 text-accent' : canSubmit ? 'border-slate-700 bg-slate-800 text-slate-300 hover:text-accent hover:border-accent/50' : 'border-slate-700 bg-slate-800 text-slate-600'
-                                            } disabled:cursor-default`}
-                                            title="Save prediction"
-                                          >
-                                            <CheckIcon />
-                                          </button>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                )
-                              })}
+                              {dayMatches.map(match => renderMatchCard(match))}
                             </div>
                           )}
                         </div>
@@ -573,3 +660,4 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
     </div>
   )
 }
+

@@ -131,36 +131,42 @@ export default async function GroupStagePage({ params, searchParams }: Props) {
       </div>
 
       {/* Rules card */}
-      <div className="animate-hero animate-hero-2 rounded-xl border border-slate-700 bg-slate-800/60 p-5 flex flex-col gap-4">
-        <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wide">How it works</h2>
-        <div className="grid sm:grid-cols-3 gap-4">
-          <div className="flex flex-col gap-1">
-            <span className="text-2xl font-black text-accent">5 pts</span>
-            <span className="text-sm font-semibold text-slate-200">Correct score</span>
-            <span className="text-xs text-slate-400">Exact scoreline for any match</span>
+      <details className="animate-hero animate-hero-2 rounded-xl border border-slate-700 bg-slate-800/60 group/rules">
+        <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none hover:bg-slate-700/30 transition-colors rounded-xl">
+          <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wide">How it works</h2>
+          <span className="text-slate-400 text-xl font-light leading-none group-open/rules:hidden">+</span>
+          <span className="text-slate-400 text-xl font-light leading-none hidden group-open/rules:block">−</span>
+        </summary>
+        <div className="px-5 pb-5 flex flex-col gap-4 border-t border-slate-700 pt-4">
+          <div className="grid sm:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-1">
+              <span className="text-2xl font-black text-accent">5 pts</span>
+              <span className="text-sm font-semibold text-slate-200">Correct score</span>
+              <span className="text-xs text-slate-400">Exact scoreline for any match</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-2xl font-black text-accent">3 pts</span>
+              <span className="text-sm font-semibold text-slate-200">Correct outcome</span>
+              <span className="text-xs text-slate-400">Right result — win, draw, or loss</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-2xl font-black text-accent">1 pt</span>
+              <span className="text-sm font-semibold text-slate-200">Group position</span>
+              <span className="text-xs text-slate-400">Per correct spot in the final standings — tiebreaker</span>
+            </div>
           </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-2xl font-black text-accent">3 pts</span>
-            <span className="text-sm font-semibold text-slate-200">Correct outcome</span>
-            <span className="text-xs text-slate-400">Right result — win, draw, or loss</span>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-2xl font-black text-accent">1 pt</span>
-            <span className="text-sm font-semibold text-slate-200">Group position</span>
-            <span className="text-xs text-slate-400">Per correct spot in the final standings — tiebreaker</span>
+          <div className="flex flex-col gap-2 pt-1 border-t border-slate-700">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <span className="w-2 h-2 rounded-full bg-accent shrink-0" />
+              Match predictions are open until each match kicks off.
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <span className="w-2 h-2 rounded-full bg-brand shrink-0" />
+              Group standings predictions lock when the first match of the tournament kicks off.
+            </div>
           </div>
         </div>
-        <div className="flex flex-col gap-2 pt-1 border-t border-slate-700">
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span className="w-2 h-2 rounded-full bg-accent shrink-0" />
-            Match predictions are open until each match kicks off.
-          </div>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span className="w-2 h-2 rounded-full bg-brand shrink-0" />
-            Group standings predictions lock when the first match of the tournament kicks off.
-          </div>
-        </div>
-      </div>
+      </details>
 
       {/* Gate: must be in a group */}
       {!inGroup ? (
@@ -183,6 +189,7 @@ export default async function GroupStagePage({ params, searchParams }: Props) {
         </div>
       ) : (
         <GroupStageClient
+          key={pickGroupId}
           seasonId={seasonId}
           pickGroupId={pickGroupId!}
           predictionsOpen={predictionsOpen}
