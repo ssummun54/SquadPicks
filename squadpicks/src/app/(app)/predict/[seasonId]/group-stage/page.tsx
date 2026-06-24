@@ -72,7 +72,7 @@ export default async function GroupStagePage({ params, searchParams }: Props) {
           .eq('user_id', user.id)
           .eq('pick_group_id', pickGroupId!),
         supabase.from('match_predictions')
-          .select('match_id, home_score, away_score')
+          .select('match_id, home_score, away_score, points_exact, points_outcome')
           .eq('user_id', user.id)
           .eq('pick_group_id', pickGroupId!),
         supabase.from('rounds')

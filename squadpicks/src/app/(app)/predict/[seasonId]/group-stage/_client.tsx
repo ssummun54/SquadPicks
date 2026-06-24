@@ -28,7 +28,7 @@ interface Match     { id: string; kickoff_at: string; status: string; home_score
 interface GroupTeam { team_id: string; final_position: number | null; teams: Team }
 interface Group     { id: string; name: string; slug: string; group_teams: GroupTeam[] }
 
-interface ExistingMatchPred { match_id: string; home_score: number; away_score: number }
+interface ExistingMatchPred { match_id: string; home_score: number; away_score: number; points_exact: number; points_outcome: number }
 interface ExistingGroupPred { group_id: string; team_id: string; predicted_position: number }
 
 interface Props {
@@ -127,6 +127,9 @@ function LockIcon({ open = false }: { open?: boolean }) {
 /* ─── Component ─────────────────────────────────────────────── */
 
 export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches, existingGroupPreds, existingMatchPreds }: Props) {
+  const matchPoints: Record<string, number> = {}
+  existingMatchPreds.forEach(p => { matchPoints[p.match_id] = p.points_exact + p.points_outcome })
+
   const initMatchPreds = (): MatchPreds => {
     const m: MatchPreds = {}
     existingMatchPreds.forEach(p => { m[p.match_id] = { home: String(p.home_score), away: String(p.away_score) } })
@@ -379,7 +382,10 @@ export function GroupStageClient({ pickGroupId, predictionsOpen, groups, matches
             </span>
           )}
           {match.status === 'completed' && match.home_score !== null && (
-            <span className="text-accent">Result: {match.home_score}–{match.away_score}</span>
+            <span className="text-accent">
+              Result: {match.home_score}–{match.away_score}
+              {match.id in matchPoints && <> · {matchPoints[match.id]}pts</>}
+            </span>
           )}
           <span className="ml-auto text-xs shrink-0">
             {matchSaved[match.id] === 'saving' && <span className="text-slate-500">Saving…</span>}
