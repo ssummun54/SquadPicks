@@ -195,7 +195,7 @@ export function LeaderboardClient({ seasons, activeSeason, globalRows, groupsDat
                       : 'border-slate-700 text-slate-300 hover:border-accent hover:text-accent'
                   }`}
                 >
-                  {(s.competitions as any)?.name ?? s.name}
+                  {s.name.replace(/FIFA World Cup \d{4}\s*/i, 'WC ').replace(/UEFA Champions League \d{4}-\d{2}\s*/i, 'UCL ').trim()}
                 </a>
               ))}
             </div>
@@ -203,7 +203,7 @@ export function LeaderboardClient({ seasons, activeSeason, globalRows, groupsDat
           <div className="max-w-2xl">
             {activeSeasonMeta && (
               <h2 className="text-base font-bold text-slate-200 mb-3">
-                {(activeSeasonMeta.competitions as any)?.name ?? activeSeasonMeta.name}
+                {activeSeasonMeta.name}
               </h2>
             )}
             <LeaderboardTable rows={globalRows} myId={myId} />

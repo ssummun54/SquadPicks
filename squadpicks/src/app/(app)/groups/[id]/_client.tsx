@@ -334,7 +334,7 @@ export function GroupPageClient({
                     : 'border-slate-600 text-slate-400 hover:border-slate-400 hover:text-slate-200'
                 }`}
               >
-                {(s.competitions as any)?.name ?? s.name}
+                {s.name.replace(/FIFA World Cup \d{4}\s*/i, 'WC ').replace(/UEFA Champions League \d{4}-\d{2}\s*/i, 'UCL ').trim()}
               </button>
             ))}
             {isAdmin && (

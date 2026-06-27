@@ -68,7 +68,7 @@ export default async function LeaderboardPage({ searchParams }: Props) {
               return {
                 id: s.id,
                 name: s.name,
-                competitionName: (s.competitions as any)?.name ?? s.name,
+                competitionName: s.name.replace(/FIFA World Cup \d{4}\s*/i, 'WC ').replace(/UEFA Champions League \d{4}-\d{2}\s*/i, 'UCL ').trim(),
                 rows: rows ?? [],
               }
             })

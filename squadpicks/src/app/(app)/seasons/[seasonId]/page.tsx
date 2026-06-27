@@ -40,7 +40,7 @@ function getRules(rounds: Season['rounds']) {
   return [
     { pts: '5 pts', label: 'Exact score',    desc: 'Right scoreline for any match' },
     { pts: '3 pts', label: 'Correct outcome', desc: 'Win, draw, or loss' },
-    { pts: '+2 pts', label: 'Correct method', desc: 'Regular, extra time, or penalties' },
+    { pts: '+1 pt', label: 'Correct method', desc: 'Regular, extra time, or penalties' },
   ]
 }
 
