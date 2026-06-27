@@ -14,17 +14,17 @@ export default async function AdminPage() {
     .select('id, name')
     .neq('status', 'completed')
     .order('year', { ascending: false })
-    .limit(1)
 
-  const seasonId = seasons?.[0]?.id
-  if (!seasonId) {
+  if (!seasons?.length) {
     return <div className="text-slate-400 p-8 text-center">No active season.</div>
   }
 
+  const seasonIds = seasons.map(s => s.id)
+
   const { data: rounds } = await supabase
     .from('rounds')
-    .select('id, name, type, sort_order')
-    .eq('season_id', seasonId)
+    .select('id, name, type, sort_order, season_id')
+    .in('season_id', seasonIds)
     .order('sort_order')
 
   const roundIds = rounds?.map(r => r.id) ?? []
@@ -64,77 +64,90 @@ export default async function AdminPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-black text-slate-100">Admin</h1>
-          <p className="text-slate-400 text-sm mt-0.5">{seasons[0].name} · scores sync automatically every 5 min</p>
+          <p className="text-slate-400 text-sm mt-0.5">Scores sync automatically every 5 min</p>
         </div>
         <div className="flex flex-col gap-2 items-end">
           <SyncButton />
           <SeedTeamsButton />
           <SeedFixturesButton />
           <SeedCLFinalButton />
-          <MarkSeasonCompletedButton seasonId={seasonId} seasonName={seasons[0].name} />
         </div>
       </div>
 
-      {/* Matches grouped by round */}
-      {rounds?.map(round => {
-        const roundMatches = matches.filter(m => m.round_id === round.id)
-        if (roundMatches.length === 0) return null
-
-        const done  = roundMatches.filter(m => m.status === 'completed').length
-        const total = roundMatches.length
+      {/* Seasons */}
+      {seasons.map(season => {
+        const seasonRounds = rounds?.filter(r => r.season_id === season.id) ?? []
+        if (seasonRounds.length === 0) return null
 
         return (
-          <section key={round.id}>
-            <h2 className="text-base font-bold text-slate-200 mb-3 flex items-center gap-2">
-              {round.name}
-              <span className={`text-xs font-normal ${done === total ? 'text-accent' : 'text-slate-500'}`}>
-                {done}/{total}
-              </span>
-            </h2>
-            <div className="flex flex-col gap-1.5">
-              {roundMatches.map((match: any) => {
-                const matchRow: MatchRow = {
-                  id:          match.id,
-                  kickoff_at:  match.kickoff_at,
-                  status:      match.status,
-                  home_score:  match.home_score,
-                  away_score:  match.away_score,
-                  result_method: match.result_method,
-                  penalty_winner_id: match.penalty_winner_id,
-                  round_type:   round.type,
-                  home_team:   match.home_team,
-                  away_team:   match.away_team,
-                  external_id: match.external_id,
-                }
-                return (
-                  <div
-                    key={match.id}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border ${
-                      match.status === 'completed'
-                        ? 'border-slate-700/50 bg-slate-800/30'
-                        : 'border-slate-600 bg-slate-800'
-                    }`}
-                  >
-                    <span className="text-xs text-slate-500 w-28 shrink-0">
-                      {format(new Date(match.kickoff_at), 'MMM d, HH:mm')}
-                    </span>
-                    <span className="text-sm text-slate-300 text-right w-20 shrink-0 truncate">
-                      {match.home_team?.short_name ?? match.home_team?.name ?? 'TBD'}
-                    </span>
-                    <MatchOverrideForm match={matchRow} />
-                    <span className="text-sm text-slate-300 w-20 shrink-0 truncate">
-                      {match.away_team?.short_name ?? match.away_team?.name ?? 'TBD'}
-                    </span>
-                    {!match.external_id && (
-                      <span className="text-xs text-yellow-500 shrink-0" title="No external_id — won't auto-sync">
-                        no ID
-                      </span>
-                    )}
-                  </div>
-                )
-              })}
+          <div key={season.id} className="flex flex-col gap-6">
+            <div className="flex items-center justify-between border-b border-slate-700 pb-3">
+              <h2 className="text-lg font-bold text-slate-100">{season.name}</h2>
+              <MarkSeasonCompletedButton seasonId={season.id} seasonName={season.name} />
             </div>
-          </section>
+
+            {seasonRounds.map(round => {
+              const roundMatches = matches.filter(m => m.round_id === round.id)
+              if (roundMatches.length === 0) return null
+
+              const done  = roundMatches.filter(m => m.status === 'completed').length
+              const total = roundMatches.length
+
+              return (
+                <section key={round.id}>
+                  <h3 className="text-base font-bold text-slate-200 mb-3 flex items-center gap-2">
+                    {round.name}
+                    <span className={`text-xs font-normal ${done === total ? 'text-accent' : 'text-slate-500'}`}>
+                      {done}/{total}
+                    </span>
+                  </h3>
+                  <div className="flex flex-col gap-1.5">
+                    {roundMatches.map((match: any) => {
+                      const matchRow: MatchRow = {
+                        id:          match.id,
+                        kickoff_at:  match.kickoff_at,
+                        status:      match.status,
+                        home_score:  match.home_score,
+                        away_score:  match.away_score,
+                        result_method: match.result_method,
+                        penalty_winner_id: match.penalty_winner_id,
+                        round_type:   round.type,
+                        home_team:   match.home_team,
+                        away_team:   match.away_team,
+                        external_id: match.external_id,
+                      }
+                      return (
+                        <div
+                          key={match.id}
+                          className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border ${
+                            match.status === 'completed'
+                              ? 'border-slate-700/50 bg-slate-800/30'
+                              : 'border-slate-600 bg-slate-800'
+                          }`}
+                        >
+                          <span className="text-xs text-slate-500 w-28 shrink-0">
+                            {format(new Date(match.kickoff_at), 'MMM d, HH:mm')}
+                          </span>
+                          <span className="text-sm text-slate-300 text-right w-20 shrink-0 truncate">
+                            {match.home_team?.short_name ?? match.home_team?.name ?? 'TBD'}
+                          </span>
+                          <MatchOverrideForm match={matchRow} />
+                          <span className="text-sm text-slate-300 w-20 shrink-0 truncate">
+                            {match.away_team?.short_name ?? match.away_team?.name ?? 'TBD'}
+                          </span>
+                          {!match.external_id && (
+                            <span className="text-xs text-yellow-500 shrink-0" title="No external_id — won't auto-sync">
+                              no ID
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </section>
+              )
+            })}
+          </div>
         )
       })}
 

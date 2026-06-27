@@ -140,9 +140,10 @@ export interface Database {
       }
     }
     Functions: {
-      score_match_predictions:   { Args: { p_match_id: string }; Returns: undefined }
-      score_group_predictions:   { Args: { p_group_id: string }; Returns: undefined }
-      score_bracket_predictions: { Args: { p_match_id: string }; Returns: undefined }
+      score_match_predictions:    { Args: { p_match_id: string }; Returns: undefined }
+      score_group_predictions:    { Args: { p_group_id: string }; Returns: undefined }
+      score_bracket_predictions:  { Args: { p_match_id: string }; Returns: undefined }
+      score_knockout_predictions: { Args: { p_match_id: string }; Returns: undefined }
     }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>

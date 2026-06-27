@@ -32,6 +32,7 @@ function normaliseName(name: string | null | undefined): string {
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
   const body = await req.json().catch(() => ({}))
+  const dryRun = body.dryRun === true
   const bearerSecret = authHeader?.replace('Bearer ', '') ?? body.secret
   const isBearer = process.env.CRON_SECRET && bearerSecret === process.env.CRON_SECRET
 
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
   // ── Load reference data ──────────────────────────────────────────────────────
   const [teamsRes, roundsRes, groupsRes] = await Promise.all([
     service.from('teams').select('id, name, short_name'),
-    service.from('rounds').select('id, slug').eq('season_id', '00000000-0000-0000-0000-000000000100'),
+    service.from('rounds').select('id, slug, type').in('season_id', ['00000000-0000-0000-0000-000000000100', '00000000-0000-0000-0000-000000000200']),
     service.from('tournament_groups').select('id, slug'),
   ])
 
@@ -59,14 +60,18 @@ export async function POST(req: NextRequest) {
   if (groupsRes.error) return NextResponse.json({ error: groupsRes.error.message }, { status: 500 })
 
   const teamByName  = new Map<string, string>()
-  const roundBySlug = new Map<string, string>()
+  const groupRoundBySlug = new Map<string, string>()
+  const knockoutRoundBySlug = new Map<string, string>()
   const groupBySlug = new Map<string, string>()
 
   for (const t of teamsRes.data!) {
     teamByName.set(normaliseName(t.name), t.id)
     if (t.short_name) teamByName.set(normaliseName(t.short_name), t.id)
   }
-  for (const r of roundsRes.data!)  roundBySlug.set(r.slug, r.id)
+  for (const r of (roundsRes.data as { id: string; slug: string; type: string }[])) {
+    if (r.type === 'group') groupRoundBySlug.set(r.slug, r.id)
+    else knockoutRoundBySlug.set(r.slug, r.id)
+  }
   for (const g of groupsRes.data!)  groupBySlug.set(g.slug, g.id)
 
   // ── Fetch matches from football-data.org ────────────────────────────────────
@@ -81,7 +86,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: 'No WC2026 matches available from API yet', inserted: 0 })
   }
 
-  const report = { inserted: 0, updated: 0, unmatched: [] as string[] }
+  const report: { inserted: number; updated: number; unmatched: string[]; preview?: any[] } = { inserted: 0, updated: 0, unmatched: [] }
 
   for (const match of matches) {
     const externalId = String(match.id)
@@ -91,7 +96,10 @@ export async function POST(req: NextRequest) {
       report.unmatched.push(`Unknown stage "${match.stage}" (match ${externalId})`)
       continue
     }
-    const roundId = roundBySlug.get(roundSlug)
+    const isKnockoutStage = roundSlug !== 'group_stage'
+    const roundId = isKnockoutStage
+      ? knockoutRoundBySlug.get(roundSlug)
+      : groupRoundBySlug.get(roundSlug)
     if (!roundId) {
       report.unmatched.push(`Round slug "${roundSlug}" not in DB`)
       continue
@@ -125,15 +133,32 @@ export async function POST(req: NextRequest) {
       away_score:   match.score.fullTime.away ?? null,
     }
 
+    const { data: existing } = await service
+      .from('matches')
+      .select('id')
+      .eq('external_id', externalId)
+      .maybeSingle()
+
+    if (existing) {
+      report.updated++
+      continue
+    }
+
+    if (dryRun) {
+      report.inserted++
+      report.preview = report.preview ?? []
+      ;(report.preview as any[]).push({ externalId, round: roundSlug, home: match.homeTeam?.name, away: match.awayTeam?.name, kickoff: match.utcDate })
+      continue
+    }
+
     const { error } = await service
       .from('matches')
-      .upsert(row, { onConflict: 'external_id' })
+      .insert(row)
 
     if (error) {
       report.unmatched.push(`DB error for match ${externalId}: ${error.message}`)
     } else {
-      const isNew = match.status === 'SCHEDULED' || match.status === 'TIMED'
-      if (isNew) report.inserted++ ; else report.updated++
+      report.inserted++
     }
   }
 
@@ -142,6 +167,8 @@ export async function POST(req: NextRequest) {
     inserted:  report.inserted,
     updated:   report.updated,
     unmatched: report.unmatched,
+    preview:   report.preview,
+    dryRun,
     competition: WC_CODE,
     season:      WC_SEASON,
   })

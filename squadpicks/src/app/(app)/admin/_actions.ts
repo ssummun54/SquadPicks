@@ -38,13 +38,13 @@ export async function overrideMatchScore(
 
   if (error) throw new Error(error.message)
 
-  await service.rpc('score_match_predictions', { p_match_id: matchId })
-
   const roundType = (match as { rounds?: { type?: string } | { type?: string }[] }).rounds
   const isKnockout = Array.isArray(roundType) ? roundType[0]?.type === 'knockout' : roundType?.type === 'knockout'
 
   if (isKnockout) {
-    await service.rpc('score_bracket_predictions', { p_match_id: matchId })
+    await service.rpc('score_knockout_predictions', { p_match_id: matchId })
+  } else {
+    await service.rpc('score_match_predictions', { p_match_id: matchId })
   }
 
   revalidatePath('/leaderboard')
@@ -102,5 +102,7 @@ export async function triggerSync(): Promise<{ synced: number; results: string[]
   )
 
   if (!res.ok) throw new Error(`Sync failed: ${res.status}`)
-  return res.json()
+  const data = await res.json()
+  revalidatePath('/admin')
+  return data
 }

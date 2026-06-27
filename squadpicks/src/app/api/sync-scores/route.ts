@@ -96,10 +96,10 @@ async function handler(req: NextRequest) {
       continue
     }
 
-    await service.rpc('score_match_predictions', { p_match_id: dbMatch.id })
-
     if (isKnockout) {
-      await service.rpc('score_bracket_predictions', { p_match_id: dbMatch.id })
+      await service.rpc('score_knockout_predictions', { p_match_id: dbMatch.id })
+    } else {
+      await service.rpc('score_match_predictions', { p_match_id: dbMatch.id })
     }
 
     results.push(`OK ${dbMatch.external_id} (${homeScore}–${awayScore}${isPenalties ? ' pens' : ''})`)
